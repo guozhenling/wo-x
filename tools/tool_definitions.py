@@ -115,17 +115,103 @@ def get_search_runbooks_definition() -> Dict[str, Any]:
     }
 
 
+def get_search_slow_queries_definition() -> Dict[str, Any]:
+    """
+    返回 search_slow_queries 的工具定义
+
+    用于查询数据库慢查询日志
+    """
+    return {
+        "type": "function",
+        "function": {
+            "name": "search_slow_queries",
+            "description": """搜索数据库慢查询日志，用于分析数据库性能问题。
+
+使用场景：
+- 数据库死锁问题
+- 查询超时问题
+- 数据库响应慢
+
+返回：
+- 慢查询列表，包含 SQL、执行时间、锁等待时间等
+""",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "time_range": {
+                        "type": "integer",
+                        "description": "查询最近多少分钟的慢查询，默认 60 分钟"
+                    },
+                    "min_duration": {
+                        "type": "number",
+                        "description": "最小执行时间（秒），默认 1.0 秒"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "返回记录数量，默认 10"
+                    }
+                },
+                "required": []
+            }
+        }
+    }
+
+
+def get_deployment_history_definition() -> Dict[str, Any]:
+    """
+    返回 get_deployment_history 的工具定义
+
+    用于查询部署历史记录
+    """
+    return {
+        "type": "function",
+        "function": {
+            "name": "get_deployment_history",
+            "description": """查询最近的部署历史，用于排查部署相关问题。
+
+使用场景：
+- 故障发生时间与部署时间接近
+- 新功能上线后出现问题
+- 需要回滚判断
+
+返回：
+- 部署记录列表，包含时间、服务、版本、操作人等
+""",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "hours": {
+                        "type": "integer",
+                        "description": "查询最近多少小时的部署，默认 24 小时"
+                    },
+                    "service": {
+                        "type": "string",
+                        "description": "服务名称，不指定则查所有服务"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "返回记录数量，默认 20"
+                    }
+                },
+                "required": []
+            }
+        }
+    }
+
+
 def get_all_tool_definitions() -> List[Dict[str, Any]]:
     """
     返回所有工具定义
 
     Day 3: search_logs
-    Day 5: search_runbooks（新增）
-    Day 8-9: 更多工具
+    Day 5: search_runbooks
+    Day 6: search_slow_queries, get_deployment_history
     """
     return [
         get_search_logs_definition(),
-        get_search_runbooks_definition()  # Day 5 新增
+        get_search_runbooks_definition(),
+        get_search_slow_queries_definition(),
+        get_deployment_history_definition()
     ]
 
 

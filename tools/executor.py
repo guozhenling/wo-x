@@ -13,6 +13,8 @@ import logging
 
 from .log_search import search_logs
 from .runbook_search import search_runbooks
+from .slow_query_search import search_slow_queries
+from .deployment_history import get_deployment_history
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +46,9 @@ def execute_tool(
     # 工具映射表
     TOOL_REGISTRY = {
         "search_logs": search_logs,
-        "search_runbooks": search_runbooks,  # Day 5 新增
+        "search_runbooks": search_runbooks,
+        "search_slow_queries": search_slow_queries,
+        "get_deployment_history": get_deployment_history,
     }
 
     # 检查工具是否存在
