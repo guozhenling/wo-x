@@ -15,6 +15,8 @@ from .log_search import search_logs
 from .runbook_search import search_runbooks
 from .slow_query_search import search_slow_queries
 from .deployment_history import get_deployment_history
+from .oom_search import search_oom_events
+from .timeout_search import search_timeout_events
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +51,8 @@ def execute_tool(
         "search_runbooks": search_runbooks,
         "search_slow_queries": search_slow_queries,
         "get_deployment_history": get_deployment_history,
+        "search_oom_events": search_oom_events,
+        "search_timeout_events": search_timeout_events,
     }
 
     # 检查工具是否存在

@@ -199,19 +199,115 @@ def get_deployment_history_definition() -> Dict[str, Any]:
     }
 
 
+def get_search_oom_events_definition() -> Dict[str, Any]:
+    """
+    返回 search_oom_events 的工具定义
+
+    用于查询 OOM（内存溢出）事件
+    """
+    return {
+        "type": "function",
+        "function": {
+            "name": "search_oom_events",
+            "description": """搜索 OOM（Out of Memory，内存溢出）事件，用于排查内存相关问题。
+
+使用场景：
+- Pod/容器频繁重启
+- 服务不稳定
+- 内存相关告警
+
+返回：
+- OOM 事件列表，包含服务、容器、内存使用、重启次数等
+""",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "time_range": {
+                        "type": "integer",
+                        "description": "查询最近多少分钟的事件，默认 60 分钟"
+                    },
+                    "service": {
+                        "type": "string",
+                        "description": "服务名称，不指定则查所有服务"
+                    },
+                    "min_restart_count": {
+                        "type": "integer",
+                        "description": "最小重启次数，用于筛选频繁重启的容器，默认 0"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "返回记录数量，默认 20"
+                    }
+                },
+                "required": []
+            }
+        }
+    }
+
+
+def get_search_timeout_events_definition() -> Dict[str, Any]:
+    """
+    返回 search_timeout_events 的工具定义
+
+    用于查询搜推广（搜索、推荐、广告）超时事件
+    """
+    return {
+        "type": "function",
+        "function": {
+            "name": "search_timeout_events",
+            "description": """搜索搜推广（搜索、推荐、广告）服务的超时事件，用于排查延迟问题。
+
+使用场景：
+- 搜索/推荐/广告响应慢
+- P99 延迟升高
+- 用户体验下降
+
+返回：
+- 超时事件列表，包含服务、接口、超时阶段、实际耗时等
+""",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "time_range": {
+                        "type": "integer",
+                        "description": "查询最近多少分钟的事件，默认 60 分钟"
+                    },
+                    "service": {
+                        "type": "string",
+                        "description": "服务名称（search/recommendation/ad），不指定则查所有",
+                        "enum": ["search", "recommendation", "ad"]
+                    },
+                    "min_timeout_ms": {
+                        "type": "integer",
+                        "description": "最小超时时间（毫秒），用于筛选严重超时，默认 0"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "返回记录数量，默认 20"
+                    }
+                },
+                "required": []
+            }
+        }
+    }
+
+
 def get_all_tool_definitions() -> List[Dict[str, Any]]:
     """
     返回所有工具定义
 
     Day 3: search_logs
     Day 5: search_runbooks
-    Day 6: search_slow_queries, get_deployment_history
+    Day 6: search_slow_queries, get_deployment_history,
+           search_oom_events, search_timeout_events
     """
     return [
         get_search_logs_definition(),
         get_search_runbooks_definition(),
         get_search_slow_queries_definition(),
-        get_deployment_history_definition()
+        get_deployment_history_definition(),
+        get_search_oom_events_definition(),
+        get_search_timeout_events_definition()
     ]
 
 
