@@ -1,9 +1,9 @@
 """
-Day 4: Agent with Tool-Calling Loop
+Day 4: Agent with Tool-Calling Loop (Anthropic SDK 版本)
 
-实现完整的 Agent，能够：
+使用 Anthropic 原生 SDK 实现，支持：
 1. 主动决定是否需要调用工具
-2. 执行多轮对话（user → assistant → tool → assistant）
+2. 执行多轮对话
 3. 限制调用次数防止无限循环
 4. 记录完整的调用轨迹
 """
@@ -11,71 +11,52 @@ import os
 import json
 import logging
 from typing import Dict, Any, List
-from openai import OpenAI
+from anthropic import Anthropic
 
 # 导入我们前 3 天创建的模块
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from src.models import IncidentResult
 from src.policy import PolicyEngine
 from src.trace_manager import TraceManager
 from tools import get_all_tool_definitions, execute_tool
 
-# 导入配置工具（会自动加载 config.yaml 或 .env）
+# 导入配置工具
 try:
     from src.config import get_api_key, get_base_url, get_model
 except ImportError:
-    # 如果没有 config.py，使用 dotenv
     from dotenv import load_dotenv
     load_dotenv()
-    get_api_key = lambda: os.getenv("OPENAI_API_KEY")
-    get_base_url = lambda: os.getenv("OPENAI_BASE_URL")
-    get_model = lambda: os.getenv("OPENAI_MODEL", "claude-sonnet-5")
+    get_api_key = lambda: os.getenv("ANTHROPIC_API_KEY")
+    get_base_url = lambda: None
+    get_model = lambda: os.getenv("ANTHROPIC_MODEL", "claude-opus-4-6")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 class IncidentAgent:
-    """
-    故障分析 Agent
-
-    整合 Day 1-3 的所有功能：
-    - Day 1: Structured Output
-    - Day 2: Policy 规则
-    - Day 3: 工具系统
-    - Day 4: Tool-Calling Loop（今天）
-
-    工作流程：
-    1. 接收故障描述
-    2. 决定是否需要查日志
-    3. 如果需要，调用 search_logs
-    4. 基于日志给出分析
-    5. Policy 规则修正
-    6. 返回最终结果
-    """
+    """故障分析 Agent（Anthropic SDK）"""
 
     def __init__(
         self,
-        model: str = None,  # None 表示使用配置文件中的模型
+        model: str = None,
         temperature: float = 0.3,
         max_rounds: int = 5
     ):
-        """
-        初始化 Agent
-
-        Args:
-            model: LLM 模型，None 则从配置文件读取
-            temperature: 温度参数
-            max_rounds: 最大对话轮数
-        """
         if model is None:
             model = get_model()
 
-        self.client = OpenAI(
-            api_key=get_api_key() or os.getenv("OPENAI_API_KEY"),
-            base_url=get_base_url() or os.getenv("OPENAI_BASE_URL")
+        # 使用 Anthropic SDK
+        base_url = get_base_url()
+
+        # 如果 base_url 以 /v1 结尾，移除它（Anthropic SDK 会自动添加）
+        if base_url and base_url.endswith('/v1'):
+            base_url = base_url[:-3]
+
+        self.client = Anthropic(
+            api_key=get_api_key(),
+            base_url=base_url if base_url else None
         )
         self.model = model
         self.temperature = temperature
@@ -87,123 +68,113 @@ class IncidentAgent:
         logger.info(f"初始化 Agent: model={model}, max_rounds={max_rounds}")
 
     def analyze(self, incident_description: str) -> Dict[str, Any]:
-        """
-        分析故障（完整流程）
-
-        Args:
-            incident_description: 故障描述
-
-        Returns:
-            完整的分析结果，包含：
-            - classification: 分类结果
-            - evidence: 工具调用的证据
-            - trace_file: 调用轨迹文件路径
-        """
-        logger.info(f"\n{'='*80}")
-        logger.info(f"开始分析故障")
-        logger.info(f"{'='*80}")
-        logger.info(f"描述: {incident_description}")
-
-        # 开始轨迹记录
-        trace_id = self.trace.start_trace(incident_description)
-
+        """分析故障（完整流程）"""
         try:
-            # 构造初始消息
-            messages = self._build_initial_messages(incident_description)
+            logger.info("\n" + "=" * 80)
+            logger.info("开始分析故障")
+            logger.info("=" * 80)
+            logger.info(f"描述: {incident_description}")
+
+            # 开始轨迹记录
+            self.trace.start_trace(incident_description)
+
+            # 构建初始消息
+            system_prompt = self._build_system_prompt()
+            messages = [{
+                "role": "user",
+                "content": f"分析以下故障：\n\n{incident_description}"
+            }]
+
+            # 转换工具定义为 Anthropic 格式
+            tools = self._convert_tools()
 
             # Tool-Calling Loop
-            final_classification = None
             evidence = []
+            final_classification = None
 
             for round_num in range(self.max_rounds):
                 logger.info(f"\n--- Round {round_num + 1} ---")
 
-                # 调用 LLM
-                response = self.client.chat.completions.create(
+                # 调用 Anthropic API
+                response = self.client.messages.create(
                     model=self.model,
+                    max_tokens=4096,
+                    system=system_prompt,
                     messages=messages,
-                    tools=get_all_tool_definitions(),
+                    tools=tools,
                     temperature=self.temperature
                 )
 
-                message = response.choices[0].message
-
                 # 检查是否有工具调用
-                if not message.tool_calls:
-                    # 没有工具调用，说明 LLM 准备给出最终答案
+                tool_uses = [block for block in response.content if block.type == "tool_use"]
+
+                if not tool_uses:
+                    # 没有工具调用，LLM 给出最终答案
                     logger.info("✓ LLM 给出最终答案")
 
-                    try:
-                        # 解析最终分类结果
-                        final_classification = json.loads(message.content)
-                        break
-                    except json.JSONDecodeError:
-                        logger.error(f"解析 LLM 输出失败: {message.content}")
-                        # 尝试提取关键信息
-                        final_classification = {
-                            "severity": "P3",
-                            "category": "unknown",
-                            "needs_human_review": True,
-                            "rationale": message.content
-                        }
-                        break
+                    # 提取文本内容
+                    text_blocks = [block.text for block in response.content if block.type == "text"]
+                    response_text = "\n".join(text_blocks) if text_blocks else ""
+
+                    # 解析 JSON
+                    final_classification = self._parse_final_answer(response_text)
+                    break
 
                 # 有工具调用
-                logger.info(f"→ LLM 请求调用 {len(message.tool_calls)} 个工具")
+                logger.info(f"→ LLM 请求调用 {len(tool_uses)} 个工具")
 
-                # 添加 assistant 消息（包含工具调用请求）
+                # 添加 assistant 消息
                 messages.append({
                     "role": "assistant",
-                    "content": message.content,
-                    "tool_calls": [
-                        {
-                            "id": tc.id,
-                            "type": tc.type,
-                            "function": {
-                                "name": tc.function.name,
-                                "arguments": tc.function.arguments
-                            }
-                        }
-                        for tc in message.tool_calls
-                    ]
+                    "content": response.content
                 })
 
-                # 执行每个工具调用
-                for tool_call in message.tool_calls:
-                    tool_name = tool_call.function.name
-                    tool_args_str = tool_call.function.arguments
+                # 执行工具并收集结果
+                tool_results = []
+                for tool_use in tool_uses:
+                    tool_name = tool_use.name
+                    tool_input = tool_use.input
 
                     logger.info(f"  执行: {tool_name}")
-                    logger.debug(f"  参数: {tool_args_str}")
 
                     # 检查调用次数限制
                     if not self.trace.can_call_tool():
                         logger.warning(f"  ⚠️  工具调用次数已达上限")
-                        tool_result = {
-                            "error": "工具调用次数超限，证据不足"
-                        }
+                        tool_result_content = json.dumps({
+                            "error": "工具调用次数超限"
+                        }, ensure_ascii=False)
                     else:
                         # 执行工具
-                        tool_result = self._execute_tool_safe(
-                            tool_name,
-                            tool_args_str
-                        )
+                        result = self._execute_tool_safe(tool_name, tool_input)
+                        tool_result_content = json.dumps(result, ensure_ascii=False)
 
                         # 记录证据
                         evidence.append({
                             "tool": tool_name,
-                            "arguments": json.loads(tool_args_str),
-                            "result": tool_result
+                            "arguments": tool_input,
+                            "result": result
                         })
 
-                    # 添加工具结果消息
-                    messages.append({
-                        "role": "tool",
-                        "tool_call_id": tool_call.id,
-                        "content": json.dumps(tool_result, ensure_ascii=False)
+                    tool_results.append({
+                        "type": "tool_result",
+                        "tool_use_id": tool_use.id,
+                        "content": tool_result_content
                     })
 
                     logger.info(f"  ✓ 工具执行完成")
+
+                # 添加工具结果消息
+                messages.append({
+                    "role": "user",
+                    "content": tool_results
+                })
+
+                # 如果工具调用次数已达上限，添加提示
+                if not self.trace.can_call_tool():
+                    messages.append({
+                        "role": "user",
+                        "content": "工具调用次数已达上限。请基于现有证据立即输出最终分类结果（纯 JSON 格式）。"
+                    })
 
             # 检查是否得到最终结果
             if not final_classification:
@@ -260,9 +231,9 @@ class IncidentAgent:
                 "error": str(e)
             }
 
-    def _build_initial_messages(self, description: str) -> List[Dict[str, Any]]:
-        """构造初始消息"""
-        system_prompt = """你是故障分析专家。
+    def _build_system_prompt(self) -> str:
+        """构造系统提示词"""
+        return """你是故障分析专家。
 
 你的任务：分析故障并给出建议。
 
@@ -271,10 +242,10 @@ class IncidentAgent:
 
 分析流程：
 1. 理解故障描述
-2. 如果需要更多证据，调用 search_logs 查看日志
-3. 基于证据给出分析结果
+2. 如果需要更多证据，调用 search_logs 查看日志（最多 2 次）
+3. **看到工具结果后，立即输出分析结果，不要再调用工具**
 
-输出格式（JSON）：
+输出格式（纯 JSON，不要 markdown）：
 {
   "severity": "P0/P1/P2/P3",
   "category": "availability/latency/database/deployment/unknown",
@@ -284,83 +255,78 @@ class IncidentAgent:
 
 注意事项：
 1. 最多调用 2 次工具
-2. 如果信息充分，直接给出结果，不要无意义地调用工具
-3. rationale 必须详细，说明基于什么证据做出判断
-4. 如果证据不足，明确说明"""
+2. 调用工具后，必须基于结果输出 JSON，不要继续调用
+3. 如果信息充分，直接给出结果，不要无意义地调用工具
+4. rationale 必须详细，说明基于什么证据做出判断
+5. 只输出 JSON，不要其他文字"""
 
-        return [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"分析以下故障：\n\n{description}"}
-        ]
+    def _convert_tools(self) -> List[Dict]:
+        """转换工具定义为 Anthropic 格式"""
+        tools = []
+        for tool_def in get_all_tool_definitions():
+            tools.append({
+                "name": tool_def["function"]["name"],
+                "description": tool_def["function"]["description"],
+                "input_schema": tool_def["function"]["parameters"]
+            })
+        return tools
 
-    def _execute_tool_safe(
-        self,
-        tool_name: str,
-        arguments_str: str
-    ) -> Any:
-        """
-        安全执行工具
-
-        处理所有可能的异常
-        """
+    def _execute_tool_safe(self, tool_name: str, tool_input: Dict) -> Any:
+        """安全执行工具"""
         try:
-            # 解析参数
-            arguments = json.loads(arguments_str)
-
             # 执行工具
-            result = execute_tool(tool_name, arguments)
+            result = execute_tool(tool_name, tool_input)
 
             # 记录到轨迹
             self.trace.record_tool_call(
                 tool_name=tool_name,
-                tool_input=arguments,
+                tool_input=tool_input,
                 tool_output=result,
                 success=True
             )
 
             return result
 
-        except json.JSONDecodeError as e:
-            logger.error(f"JSON 解析失败: {e}")
-            error_msg = f"参数格式错误: {e}"
-
-            self.trace.record_tool_call(
-                tool_name=tool_name,
-                tool_input={},
-                tool_output=None,
-                success=False,
-                error_message=error_msg
-            )
-
-            return {"error": error_msg}
-
-        except ValueError as e:
-            logger.error(f"参数校验失败: {e}")
-            error_msg = f"参数不合法: {e}"
-
-            self.trace.record_tool_call(
-                tool_name=tool_name,
-                tool_input=json.loads(arguments_str) if arguments_str else {},
-                tool_output=None,
-                success=False,
-                error_message=error_msg
-            )
-
-            return {"error": error_msg}
-
         except Exception as e:
-            logger.error(f"工具执行异常: {e}")
-            error_msg = f"工具执行失败: {e}"
+            logger.error(f"工具执行失败: {e}")
 
+            # 记录失败
             self.trace.record_tool_call(
                 tool_name=tool_name,
-                tool_input=json.loads(arguments_str) if arguments_str else {},
-                tool_output=None,
-                success=False,
-                error_message=error_msg
+                tool_input=tool_input,
+                tool_output={"error": str(e)},
+                success=False
             )
 
-            return {"error": error_msg}
+            return {"error": f"工具执行失败: {e}"}
+
+    def _parse_final_answer(self, response_text: str) -> Dict:
+        """解析最终答案"""
+        try:
+            # 清理可能的 markdown 包裹
+            cleaned_text = response_text.strip()
+            if cleaned_text.startswith("```json"):
+                cleaned_text = cleaned_text[7:]
+                if cleaned_text.endswith("```"):
+                    cleaned_text = cleaned_text[:-3]
+                cleaned_text = cleaned_text.strip()
+            elif cleaned_text.startswith("```"):
+                cleaned_text = cleaned_text[3:]
+                if cleaned_text.endswith("```"):
+                    cleaned_text = cleaned_text[:-3]
+                cleaned_text = cleaned_text.strip()
+
+            # 解析 JSON
+            return json.loads(cleaned_text)
+
+        except json.JSONDecodeError:
+            logger.error(f"解析 LLM 输出失败: {response_text}")
+            return {
+                "severity": "P3",
+                "category": "unknown",
+                "needs_human_review": True,
+                "rationale": response_text
+            }
 
 
 def main():
@@ -377,11 +343,11 @@ def main():
     print("故障分析 Agent 测试")
     print("=" * 80)
 
-    for i, case in enumerate(test_cases, 1):
-        print(f"\n案例 {i}: {case}")
+    for i, description in enumerate(test_cases, 1):
+        print(f"\n案例 {i}: {description}")
         print("-" * 80)
 
-        result = agent.analyze(case)
+        result = agent.analyze(description)
 
         print(f"\n【分析结果】")
         print(f"严重程度: {result['classification']['severity']}")
@@ -391,17 +357,13 @@ def main():
 
         print(f"\n【证据】")
         print(f"调用工具: {len(result['evidence'])} 次")
-        for j, evidence in enumerate(result['evidence'], 1):
-            print(f"  {j}. {evidence['tool']}({evidence['arguments']})")
+        for j, ev in enumerate(result['evidence'], 1):
+            print(f"  {j}. {ev['tool']}({ev['arguments']})")
 
         print(f"\n【轨迹】")
         print(f"文件: {result['trace_file']}")
 
         print("\n" + "=" * 80)
-
-        if i < len(test_cases):
-            import time
-            time.sleep(1)  # 避免 API 限流
 
 
 if __name__ == "__main__":
