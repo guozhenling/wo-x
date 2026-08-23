@@ -1,100 +1,38 @@
-id: RB-001
-title: 支付服务 5xx 错误排查手册
+title: 支付 5xx 错误处理
+description: 处理支付接口返回 5xx 错误的标准流程
 keywords:
   - 支付
   - 5xx
-  - 500
-  - 502
-  - 503
-  - 504
   - payment
-  - 网关错误
-  - 服务不可用
-
-applicable_conditions: |
-  - 支付服务返回 5xx 状态码（500/502/503/504）
-  - 支付接口响应错误率异常升高
-  - 用户反馈支付失败或超时
-  - 监控告警显示支付服务异常
+  - gateway
+  - timeout
+  - 503
+  - 502
+severity_match:
+  - P0
+  - P1
+category: availability
 
 check_steps:
-  - step: 1
-    title: 确认影响范围
-    actions:
-      - 查看错误率：当前错误率是多少？影响了多少用户？
-      - 查看时间范围：从什么时候开始的？是持续性还是间歇性？
-      - 查看地域分布：是全局问题还是特定地区？
-    commands:
-      - search_logs service=payment level=ERROR limit=20
-      - "检查监控面板：支付成功率、QPS、响应时间"
+  - 检查支付网关状态（curl gateway.internal/health）
+  - 检查数据库连接（show processlist）
+  - 查看最近 1 小时的部署记录
+  - 检查错误率趋势（Grafana）
+  - 确认影响范围（用户数、金额）
 
-  - step: 2
-    title: 检查支付网关状态
-    actions:
-      - 检查第三方支付网关是否正常（如：支付宝、微信支付、银行网关）
-      - 查看网关服务商是否有故障公告
-      - 测试网关连接性：ping、telnet、curl 健康检查接口
-    commands:
-      - "curl -X POST https://payment-gateway.example.com/health"
-      - "查看网关返回的错误码和错误信息"
+fix_steps:
+  - 如果网关返回 503：切换到备用支付通道（payment_backup）
+  - 如果数据库超时：重启连接池（kubectl rollout restart payment-service）
+  - 如果部署后出现：回滚到上一版本（git revert && deploy）
+  - 如果持续时间 > 10 分钟：升级为 P0，通知 on-call
 
-  - step: 3
-    title: 检查服务自身状态
-    actions:
-      - 检查支付服务实例是否健康：CPU、内存、磁盘
-      - 查看服务日志：是否有 OOM、线程池满、数据库连接池耗尽等错误
-      - 检查依赖服务：数据库、Redis、消息队列是否正常
-    commands:
-      - search_logs service=payment keyword=OutOfMemory
-      - search_logs service=payment keyword="connection pool"
-      - search_logs service=payment keyword=timeout
+escalation_conditions:
+  - 持续时间超过 10 分钟
+  - 影响用户超过 1000 人
+  - 错误率持续上升
+  - 备用方案也失败
 
-  - step: 4
-    title: 检查数据库连接
-    actions:
-      - 查看数据库连接数是否达到上限
-      - 检查是否有慢查询或死锁
-      - 查看数据库主从同步状态
-    commands:
-      - search_logs service=database keyword=payment
-      - "SQL: SHOW PROCESSLIST"
-      - "SQL: SELECT * FROM information_schema.innodb_locks"
-
-  - step: 5
-    title: 临时缓解措施
-    actions:
-      - 如果是网关超时：增加超时时间（5s → 10s）
-      - 如果是连接池耗尽：扩容连接池或重启服务释放连接
-      - 如果是流量过载：启用限流或降级策略
-      - 如果是代码bug：回滚到上一个稳定版本
-    commands:
-      - "配置中心修改：payment.timeout=10000"
-      - "重启服务：kubectl rollout restart deployment/payment-service"
-
-escalate_conditions: |
-  满足以下任一条件需要人工升级：
-
-  1. 影响范围大（P0 级别）：
-     - 错误率 > 20%，持续时间 > 5 分钟
-     - 完全不可用（错误率 > 50%）
-     - 影响所有用户或所有地区
-
-  2. 涉及资金安全：
-     - 重复扣款
-     - 金额异常（扣款金额与订单金额不符）
-     - 支付成功但订单未创建（资损风险）
-
-  3. 无法通过标准流程解决：
-     - 执行完所有检查步骤仍无法定位原因
-     - 需要紧急回滚但不确定回滚哪个版本
-     - 需要联系第三方支付服务商
-
-  4. 需要跨团队协作：
-     - 问题涉及多个服务（订单、库存、支付）
-     - 需要 DBA 介入处理数据库问题
-     - 需要基础设施团队处理网络/负载均衡问题
-
-contact_info:
-  oncall: "支付团队 On-call: +86-xxx-xxxx-xxxx"
-  escalation: "技术总监: +86-xxx-xxxx-xxxx"
-  external: "支付宝商户支持: 95188，微信支付: 95017"
+related_docs:
+  - https://wiki.internal/payment-architecture
+  - https://grafana.internal/payment-dashboard
+  - https://runbook.internal/payment-incident-history

@@ -1,124 +1,38 @@
-id: RB-002
-title: 数据库死锁排查手册
+title: 数据库死锁处理
+description: 处理 MySQL 死锁问题的诊断和解决流程
 keywords:
   - 数据库
   - 死锁
   - deadlock
-  - database
-  - lock
-  - 锁等待
   - mysql
-  - 事务
-  - transaction
-
-applicable_conditions: |
-  - 数据库日志出现 "Deadlock found" 错误
-  - 应用报错：Deadlock detected, transaction rolled back
-  - 数据库查询长时间无响应
-  - 监控显示锁等待数量异常增多
+  - 1205
+  - lock
+severity_match:
+  - P1
+  - P2
+category: database
 
 check_steps:
-  - step: 1
-    title: 确认死锁发生情况
-    actions:
-      - 查看死锁发生的时间和频率
-      - 确认涉及的表和事务
-      - 查看死锁日志获取详细信息
-    commands:
-      - search_logs keyword=deadlock limit=20
-      - search_logs service=database keyword=lock
-      - "SQL: SHOW ENGINE INNODB STATUS"
-      - "查看 LATEST DETECTED DEADLOCK 部分"
+  - 查看死锁日志（SHOW ENGINE INNODB STATUS）
+  - 分析事务持有的锁（information_schema.innodb_locks）
+  - 检查慢查询日志（slow query log）
+  - 查看当前活跃事务（show processlist）
+  - 确认是否有长事务未提交
 
-  - step: 2
-    title: 分析死锁原因
-    actions:
-      - 识别死锁涉及的 SQL 语句
-      - 分析事务的加锁顺序
-      - 确认是否是代码逻辑问题还是并发竞争
-    commands:
-      - "查看死锁日志中的 TRANSACTION 信息"
-      - "记录涉及的表名和索引"
-      - "分析 SQL 执行计划：EXPLAIN [SQL语句]"
+fix_steps:
+  - 短期解决：kill 阻塞的长事务
+  - 优化事务顺序（统一锁获取顺序，避免循环等待）
+  - 减少事务持有锁的时间（拆分大事务）
+  - 添加合适的索引减少锁范围
+  - 如果是批量操作导致：调整批次大小
 
-  - step: 3
-    title: 检查相关事务状态
-    actions:
-      - 查看当前正在执行的事务
-      - 检查是否有长时间未提交的事务
-      - 查看锁等待情况
-    commands:
-      - "SQL: SELECT * FROM information_schema.innodb_trx"
-      - "SQL: SELECT * FROM information_schema.innodb_locks"
-      - "SQL: SELECT * FROM information_schema.innodb_lock_waits"
-      - "查找长时间运行的事务（trx_started < NOW() - INTERVAL 30 SECOND）"
+escalation_conditions:
+  - 死锁频率 > 10 次/分钟
+  - 影响核心业务流程（订单、支付）
+  - 持续时间 > 30 分钟
+  - 优化后仍频繁出现
 
-  - step: 4
-    title: 检查应用层代码
-    actions:
-      - 检查事务中的 SQL 执行顺序是否一致
-      - 确认是否有不必要的长事务
-      - 查看是否有未正确提交或回滚的事务
-      - 检查锁的粒度是否过大（表锁 vs 行锁）
-    commands:
-      - "审查代码：事务开始、SQL执行、事务提交的逻辑"
-      - "检查是否使用了 SELECT ... FOR UPDATE"
-      - "确认事务隔离级别：SELECT @@tx_isolation"
-
-  - step: 5
-    title: 临时缓解措施
-    actions:
-      - 如果是特定慢查询导致：Kill 相关进程
-      - 如果是并发过高：限流降低并发度
-      - 如果是索引缺失：临时降级复杂查询
-      - 如果是代码bug：回滚到稳定版本
-    commands:
-      - "Kill 进程：KILL [trx_mysql_thread_id]"
-      - "限流：在应用层或 API 网关设置并发限制"
-      - "监控死锁频率，观察是否缓解"
-
-  - step: 6
-    title: 长期解决方案
-    actions:
-      - 优化 SQL 执行顺序，确保所有事务以相同顺序访问表
-      - 缩短事务持续时间，减少锁持有时间
-      - 添加合适的索引，减少扫描行数
-      - 降低事务隔离级别（如果业务允许）
-      - 拆分大事务为小事务
-    commands:
-      - "代码审查：统一锁的获取顺序"
-      - "优化：将非核心操作移出事务"
-      - "索引优化：根据 EXPLAIN 结果添加索引"
-
-escalate_conditions: |
-  满足以下任一条件需要人工升级：
-
-  1. 死锁频率过高（P1 级别）：
-     - 每分钟死锁次数 > 10 次
-     - 持续时间 > 10 分钟
-     - 导致大量请求失败（错误率 > 5%）
-
-  2. 影响核心业务：
-     - 支付、订单相关表发生死锁
-     - 用户无法下单或支付
-     - 库存数据不一致
-
-  3. 数据库整体性能下降：
-     - 活跃连接数持续增长
-     - 锁等待队列堆积
-     - 数据库 CPU > 80% 持续 5 分钟以上
-
-  4. 无法快速定位原因：
-     - 死锁日志信息不完整或难以理解
-     - 涉及多个微服务的分布式事务
-     - 需要 DBA 协助分析慢查询和索引
-
-  5. 需要变更数据库结构：
-     - 需要添加索引但担心影响线上性能
-     - 需要调整事务隔离级别
-     - 需要修改表结构或分表分库
-
-contact_info:
-  oncall: "数据库团队 On-call: +86-xxx-xxxx-xxxx"
-  dba: "DBA 值班: +86-xxx-xxxx-xxxx"
-  escalation: "技术总监: +86-xxx-xxxx-xxxx"
+related_docs:
+  - https://wiki.internal/mysql-deadlock-guide
+  - https://dev.mysql.com/doc/refman/8.0/en/innodb-deadlocks.html
+  - https://wiki.internal/transaction-best-practices
