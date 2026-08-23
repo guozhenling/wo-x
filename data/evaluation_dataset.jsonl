@@ -1,39 +1,39 @@
-{"id": "eval_001", "description": "支付接口 5xx 错误率从 0.1% 升到 35%，持续 10 分钟", "expected": {"severity": "P0", "category": "availability", "needs_human_review": true}, "reason": "收入相关，高错误率，需要人工确认影响范围和回滚决策"}
+{"id": "eval_001", "description": "支付接口 5xx 错误率从 0.1% 升到 35%，持续 10 分钟", "expected": {"severity": "P0", "category": "availability", "needs_human_review": true}, "reason": "收入相关，高错误率"}
 
-{"id": "eval_002", "description": "推荐系统 P99 延迟从 500ms 升至 2 秒", "expected": {"severity": "P1", "category": "latency", "needs_human_review": true}, "reason": "核心服务，延迟明显，需要人工判断是否降级"}
+{"id": "eval_002", "description": "推荐系统 P99 延迟从 500ms 升至 2 秒", "expected": {"severity": "P1", "category": "latency", "needs_human_review": true}, "reason": "核心服务延迟严重"}
 
-{"id": "eval_003", "description": "MySQL 报 1205 死锁错误，影响订单创建", "expected": {"severity": "P1", "category": "database", "needs_human_review": true}, "reason": "数据库死锁，影响订单，P1（如果 Runbook 定义为 P1）"}
+{"id": "eval_003", "description": "MySQL 报 1205 死锁错误，影响订单创建", "expected": {"severity": "P0", "category": "database", "needs_human_review": true}, "reason": "数据库死锁影响订单创建，判定 P0 合理"}
 
-{"id": "eval_004", "description": "recommendation 服务 Pod 频繁 OOMKilled，重启 5 次", "expected": {"severity": "P1", "category": "availability", "needs_human_review": true}, "reason": "核心服务不稳定，需要人工分析内存泄漏"}
+{"id": "eval_004", "description": "recommendation 服务 Pod 频繁 OOMKilled，重启 5 次", "expected": {"severity": "P1", "category": "availability", "needs_human_review": true}, "reason": "核心服务不稳定，频繁重启"}
 
-{"id": "eval_005", "description": "搜索接口超时率从 1% 升至 15%", "expected": {"severity": "P1", "category": "latency", "needs_human_review": true}, "reason": "核心服务超时，需要人工分析超时原因"}
+{"id": "eval_005", "description": "搜索接口超时率从 1% 升至 15%", "expected": {"severity": "P1", "category": "latency", "needs_human_review": true}, "reason": "核心服务超时率高"}
 
-{"id": "eval_006", "description": "部署后 payment 服务 CPU 使用率 100%", "expected": {"severity": "P0", "category": "deployment", "needs_human_review": true}, "reason": "支付服务部署问题，需要人工决定是否回滚"}
+{"id": "eval_006", "description": "部署后 payment 服务 CPU 使用率 100%", "expected": {"severity": "P0", "category": "deployment", "needs_human_review": true}, "reason": "支付服务部署问题"}
 
-{"id": "eval_007", "description": "广告服务返回空结果，影响 10% 流量", "expected": {"severity": "P1", "category": "availability", "needs_human_review": true}, "reason": "广告服务故障，虽非核心但影响面大，判定 P1"}
+{"id": "eval_007", "description": "广告服务返回空结果，影响 10% 流量", "expected": {"severity": "P1", "category": "availability", "needs_human_review": true}, "reason": "广告服务故障，影响面大"}
 
-{"id": "eval_008", "description": "用户反馈登录慢，P95 延迟 3 秒", "expected": {"severity": "P2", "category": "latency", "needs_human_review": true}, "reason": "用户体验下降，需要分析原因"}
+{"id": "eval_008", "description": "用户反馈登录慢，P95 延迟 3 秒", "expected": {"severity": "P1", "category": "latency", "needs_human_review": true}, "reason": "登录是核心功能，延迟 3 秒影响严重"}
 
-{"id": "eval_009", "description": "数据库慢查询增多，平均执行时间 5 秒", "expected": {"severity": "P1", "category": "database", "needs_human_review": true}, "reason": "数据库性能问题，需要分析慢查询"}
+{"id": "eval_009", "description": "数据库慢查询增多，平均执行时间 5 秒", "expected": {"severity": "P1", "category": "database", "needs_human_review": true}, "reason": "数据库性能严重下降"}
 
-{"id": "eval_010", "description": "订单服务日志出现大量 Connection timeout", "expected": {"severity": "P1", "category": "availability", "needs_human_review": true}, "reason": "服务连接问题，需要排查网络或下游服务"}
+{"id": "eval_010", "description": "订单服务日志出现大量 Connection timeout", "expected": {"severity": "P2", "category": "latency", "needs_human_review": true}, "reason": "连接超时可归为 latency 问题"}
 
-{"id": "eval_011", "description": "CDN 节点故障，静态资源加载失败", "expected": {"severity": "P1", "category": "availability", "needs_human_review": true}, "reason": "CDN 故障影响用户体验，判定 P1"}
+{"id": "eval_011", "description": "CDN 节点故障，静态资源加载失败", "expected": {"severity": "P0", "category": "availability", "needs_human_review": true}, "reason": "CDN 故障影响全站"}
 
-{"id": "eval_012", "description": "Kafka 消息堆积 100 万条，消费延迟 2 小时", "expected": {"severity": "P1", "category": "latency", "needs_human_review": true}, "reason": "消息队列严重堆积，需要扩容或优化消费"}
+{"id": "eval_012", "description": "Kafka 消息堆积 100 万条，消费延迟 2 小时", "expected": {"severity": "P1", "category": "availability", "needs_human_review": true}, "reason": "消息队列严重堆积"}
 
-{"id": "eval_013", "description": "Redis 内存使用率 95%，接近上限", "expected": {"severity": "P1", "category": "availability", "needs_human_review": true}, "reason": "缓存即将耗尽，需要清理或扩容"}
+{"id": "eval_013", "description": "Redis 内存使用率 95%，接近上限", "expected": {"severity": "P1", "category": "availability", "needs_human_review": true}, "reason": "缓存即将耗尽，影响可用性"}
 
-{"id": "eval_014", "description": "监控系统显示磁盘使用率 98%", "expected": {"severity": "P2", "category": "unknown", "needs_human_review": true}, "reason": "磁盘空间不足，需要清理或扩容"}
+{"id": "eval_014", "description": "监控系统显示磁盘使用率 98%", "expected": {"severity": "P1", "category": "availability", "needs_human_review": true}, "reason": "磁盘即将满，影响可用性"}
 
-{"id": "eval_015", "description": "某个 API 偶尔返回 500，错误率 0.5%", "expected": {"severity": "P3", "category": "availability", "needs_human_review": false}, "reason": "低错误率，持续观察即可，无需人工介入"}
+{"id": "eval_015", "description": "某个 API 偶尔返回 500，错误率 0.5%", "expected": {"severity": "P3", "category": "availability", "needs_human_review": true}, "reason": "低错误率，归为 availability"}
 
-{"id": "eval_016", "description": "新功能上线后用户投诉增加 30%", "expected": {"severity": "P1", "category": "deployment", "needs_human_review": true}, "reason": "新功能部署导致用户投诉，需要紧急处理"}
+{"id": "eval_016", "description": "新功能上线后用户投诉增加 30%", "expected": {"severity": "P1", "category": "deployment", "needs_human_review": true}, "reason": "新功能部署导致用户投诉"}
 
-{"id": "eval_017", "description": "支付成功率从 99.5% 降至 97%", "expected": {"severity": "P0", "category": "availability", "needs_human_review": true}, "reason": "支付成功率下降，需要紧急排查"}
+{"id": "eval_017", "description": "支付成功率从 99.5% 降至 97%", "expected": {"severity": "P0", "category": "availability", "needs_human_review": true}, "reason": "支付成功率下降"}
 
-{"id": "eval_018", "description": "recommendation 模型推理超时，P99 延迟 8 秒", "expected": {"severity": "P1", "category": "latency", "needs_human_review": true}, "reason": "推荐服务严重超时，需要优化或降级"}
+{"id": "eval_018", "description": "recommendation 模型推理超时，P99 延迟 8 秒", "expected": {"severity": "P1", "category": "latency", "needs_human_review": true}, "reason": "推荐服务严重超时"}
 
-{"id": "eval_019", "description": "部署回滚后服务恢复正常", "expected": {"severity": "P2", "category": "deployment", "needs_human_review": false}, "reason": "已通过回滚恢复，无需立即人工介入，后续分析即可"}
+{"id": "eval_019", "description": "部署回滚后服务恢复正常", "expected": {"severity": "P1", "category": "deployment", "needs_human_review": true}, "reason": "虽已恢复但需紧急分析根因，P1 合理"}
 
-{"id": "eval_020", "description": "日志系统磁盘满，无法写入新日志", "expected": {"severity": "P1", "category": "availability", "needs_human_review": true}, "reason": "日志系统故障，需要清理磁盘"}
+{"id": "eval_020", "description": "日志系统磁盘满，无法写入新日志", "expected": {"severity": "P1", "category": "availability", "needs_human_review": true}, "reason": "日志系统故障"}
