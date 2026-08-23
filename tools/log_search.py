@@ -252,7 +252,7 @@ class LogSearchTool:
 
 # 便捷函数
 def search_logs(
-    service: Optional[str] = None,
+    service: str,  # 改为必需参数
     keyword: Optional[str] = None,
     limit: int = 10
 ) -> List[Dict[str, Any]]:
@@ -260,13 +260,19 @@ def search_logs(
     搜索日志的便捷函数
 
     Args:
-        service: 服务名
+        service: 服务名（必需）
         keyword: 关键字（可选）
         limit: 返回结果数量
 
     Returns:
         日志列表
+
+    Raises:
+        TypeError: 如果缺少 service 参数
     """
+    if not service:
+        raise ValueError("service 参数是必需的")
+
     tool = LogSearchTool()
     result = tool.search(service=service, keyword=keyword, limit=limit)
     return result.logs

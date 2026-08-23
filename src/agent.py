@@ -12,7 +12,6 @@ import json
 import logging
 from typing import Dict, Any, List
 from openai import OpenAI
-from dotenv import load_dotenv
 
 # 导入我们前 3 天创建的模块
 import sys
@@ -23,7 +22,17 @@ from src.policy import PolicyEngine
 from src.trace_manager import TraceManager
 from tools import get_all_tool_definitions, execute_tool
 
-load_dotenv()
+# 导入配置工具（会自动加载 config.yaml 或 .env）
+try:
+    from src.config import get_api_key, get_base_url, get_model
+except ImportError:
+    # 如果没有 config.py，使用 dotenv
+    from dotenv import load_dotenv
+    load_dotenv()
+    get_api_key = lambda: os.getenv("OPENAI_API_KEY")
+    get_base_url = lambda: os.getenv("OPENAI_BASE_URL")
+    get_model = lambda: os.getenv("OPENAI_MODEL", "claude-sonnet-5")
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -49,7 +58,7 @@ class IncidentAgent:
 
     def __init__(
         self,
-        model: str = "gpt-4o-mini",
+        model: str = None,  # None 表示使用配置文件中的模型
         temperature: float = 0.3,
         max_rounds: int = 5
     ):
@@ -57,13 +66,16 @@ class IncidentAgent:
         初始化 Agent
 
         Args:
-            model: LLM 模型
+            model: LLM 模型，None 则从配置文件读取
             temperature: 温度参数
             max_rounds: 最大对话轮数
         """
+        if model is None:
+            model = get_model()
+
         self.client = OpenAI(
-            api_key=os.getenv("OPENAI_API_KEY"),
-            base_url=os.getenv("OPENAI_BASE_URL")
+            api_key=get_api_key() or os.getenv("OPENAI_API_KEY"),
+            base_url=get_base_url() or os.getenv("OPENAI_BASE_URL")
         )
         self.model = model
         self.temperature = temperature

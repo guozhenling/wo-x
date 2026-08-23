@@ -66,7 +66,7 @@ class TestIncidentResult:
                 severity="P0",
                 category="availability",
                 needs_human_review=True,
-                rationale="短"  # 错误：太短
+                rationale="短"  # 错误：只有 1 个字符，少于 5
             )
 
         error_msg = str(exc_info.value).lower()

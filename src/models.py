@@ -60,7 +60,7 @@ class IncidentResult(BaseModel):
     )
 
     rationale: str = Field(
-        min_length=10,
+        min_length=5,  # 改为 5 个字符，适配中文
         max_length=500,
         description="分类依据，必须提供充分理由"
     )
@@ -73,13 +73,13 @@ class IncidentResult(BaseModel):
 
         要求：
         - 不能为空
-        - 去除首尾空格后至少 10 个字符
+        - 去除首尾空格后至少 5 个字符
         """
         if not v or v.strip() == "":
             raise ValueError("rationale 不能为空")
 
-        if len(v.strip()) < 10:
-            raise ValueError("rationale 必须提供充分的分类理由（至少10个字符）")
+        if len(v.strip()) < 5:
+            raise ValueError("rationale 必须提供充分的分类理由（至少5个字符）")
 
         return v.strip()
 

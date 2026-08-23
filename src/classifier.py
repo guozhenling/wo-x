@@ -14,11 +14,20 @@ import json
 import logging
 from typing import Optional
 from openai import OpenAI
-from dotenv import load_dotenv
 
 from models import IncidentResult
 
-load_dotenv()
+# 导入配置工具（会自动加载 config.yaml 或 .env）
+try:
+    from config import get_api_key, get_base_url, get_model
+except ImportError:
+    # 如果没有 config.py，使用 dotenv
+    from dotenv import load_dotenv
+    load_dotenv()
+    get_api_key = lambda: os.getenv("OPENAI_API_KEY")
+    get_base_url = lambda: os.getenv("OPENAI_BASE_URL")
+    get_model = lambda: os.getenv("OPENAI_MODEL", "claude-sonnet-5")
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -40,19 +49,22 @@ class IncidentClassifier:
 
     def __init__(
         self,
-        model: str = "gpt-4o-mini",
+        model: str = None,  # None 表示使用配置文件中的模型
         temperature: float = 0.3
     ):
         """
         初始化分类器
 
         Args:
-            model: 使用的 LLM 模型
+            model: 使用的 LLM 模型，None 则从配置文件读取
             temperature: 温度参数（0-1，越低越确定）
         """
+        if model is None:
+            model = get_model()
+
         self.client = OpenAI(
-            api_key=os.getenv("OPENAI_API_KEY"),
-            base_url=os.getenv("OPENAI_BASE_URL")
+            api_key=get_api_key() or os.getenv("OPENAI_API_KEY"),
+            base_url=get_base_url() or os.getenv("OPENAI_BASE_URL")
         )
         self.model = model
         self.temperature = temperature
@@ -94,6 +106,21 @@ class IncidentClassifier:
             # 解析响应
             response_text = response.choices[0].message.content
             logger.debug(f"LLM 响应: {response_text}")
+
+            # 清理 markdown 格式（如果有）
+            response_text = response_text.strip()
+            if response_text.startswith("```json"):
+                # 移除 ```json 和 ```
+                response_text = response_text[7:]  # 移除 ```json
+                if response_text.endswith("```"):
+                    response_text = response_text[:-3]  # 移除 ```
+                response_text = response_text.strip()
+            elif response_text.startswith("```"):
+                # 移除 ``` 和 ```
+                response_text = response_text[3:]
+                if response_text.endswith("```"):
+                    response_text = response_text[:-3]
+                response_text = response_text.strip()
 
             # JSON 解析
             data = json.loads(response_text)
