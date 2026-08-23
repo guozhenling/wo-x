@@ -8,15 +8,27 @@ Day 3: 工具执行器（Tool Executor）
 
 这是连接 LLM 和实际工具的桥梁。
 """
+import sys
+import os
 from typing import Dict, Any
 import logging
 
-from .log_search import search_logs
-from .runbook_search import search_runbooks
-from .slow_query_search import search_slow_queries
-from .deployment_history import get_deployment_history
-from .oom_search import search_oom_events
-from .timeout_search import search_timeout_events
+# 支持直接运行
+if __name__ == "__main__":
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+    from tools.log_search import search_logs
+    from tools.runbook_search import search_runbooks
+    from tools.slow_query_search import search_slow_queries
+    from tools.deployment_history import get_deployment_history
+    from tools.oom_search import search_oom_events
+    from tools.timeout_search import search_timeout_events
+else:
+    from .log_search import search_logs
+    from .runbook_search import search_runbooks
+    from .slow_query_search import search_slow_queries
+    from .deployment_history import get_deployment_history
+    from .oom_search import search_oom_events
+    from .timeout_search import search_timeout_events
 
 logger = logging.getLogger(__name__)
 
