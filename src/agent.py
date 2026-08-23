@@ -235,22 +235,25 @@ class IncidentAgent:
         """构造系统提示词"""
         return """你是故障分析专家。
 
-你的任务：分析故障并给出建议。
+你的任务：分析故障并给出处理建议。
 
 可用工具：
-- search_logs: 搜索服务日志
+- search_logs: 搜索服务日志，查看错误详情
+- search_runbooks: 搜索处理手册，查找解决方案
 
 分析流程：
 1. 理解故障描述
-2. 如果需要更多证据，调用 search_logs 查看日志（最多 2 次）
-3. **看到工具结果后，立即输出分析结果，不要再调用工具**
+2. 如果需要查看错误详情，调用 search_logs
+3. 如果需要查找处理方案，调用 search_runbooks
+4. **看到工具结果后，立即输出分析结果，不要再调用工具**
+5. 最多调用 2 次工具
 
 输出格式（纯 JSON，不要 markdown）：
 {
   "severity": "P0/P1/P2/P3",
   "category": "availability/latency/database/deployment/unknown",
   "needs_human_review": true/false,
-  "rationale": "判断依据（必须基于具体证据）"
+  "rationale": "判断依据（必须基于具体证据，引用日志内容或 Runbook）"
 }
 
 注意事项：
@@ -258,7 +261,8 @@ class IncidentAgent:
 2. 调用工具后，必须基于结果输出 JSON，不要继续调用
 3. 如果信息充分，直接给出结果，不要无意义地调用工具
 4. rationale 必须详细，说明基于什么证据做出判断
-5. 只输出 JSON，不要其他文字"""
+5. 如果找到相关 Runbook，在 rationale 中引用
+6. 只输出 JSON，不要其他文字"""
 
     def _convert_tools(self) -> List[Dict]:
         """转换工具定义为 Anthropic 格式"""
