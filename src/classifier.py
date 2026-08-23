@@ -10,23 +10,26 @@ Day 1: 故障分类器
 这是最简单的版本，Day 2 会添加 Policy 规则。
 """
 import os
+import sys
 import json
 import logging
-from typing import Optional
 from openai import OpenAI
 
-from models import IncidentResult
+# 添加项目根目录到路径
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from src.models import IncidentResult
 
 # 导入配置工具（会自动加载 config.yaml 或 .env）
 try:
-    from config import get_api_key, get_base_url, get_model
+    from src.config import get_api_key, get_base_url, get_model
 except ImportError:
     # 如果没有 config.py，使用 dotenv
     from dotenv import load_dotenv
     load_dotenv()
     get_api_key = lambda: os.getenv("OPENAI_API_KEY")
     get_base_url = lambda: os.getenv("OPENAI_BASE_URL")
-    get_model = lambda: os.getenv("OPENAI_MODEL", "claude-sonnet-5")
+    get_model = lambda: os.getenv("OPENAI_MODEL", "claude-opus-4-6")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -206,6 +209,12 @@ class IncidentClassifier:
 
 def main():
     """测试分类器"""
+    # 启用详细日志（用于调试）
+    logging.basicConfig(
+        level=logging.DEBUG,  # 改为 DEBUG 可以看到所有细节
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+
     classifier = IncidentClassifier()
 
     # 测试案例

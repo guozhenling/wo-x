@@ -11,11 +11,11 @@ import pytest
 import sys
 import os
 
-# 添加 src 到路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+# 添加项目根目录到路径
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from classifier import IncidentClassifier
-from models import IncidentResult
+from src.classifier import IncidentClassifier
+from src.models import IncidentResult
 
 
 class TestIncidentClassifier:
