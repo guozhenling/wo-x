@@ -1,0 +1,20 @@
+{"timestamp": "2024-01-20T10:30:00Z", "service": "payment", "level": "ERROR", "message": "Database connection timeout after 30s", "trace_id": "trace_12345"}
+{"timestamp": "2024-01-20T10:31:00Z", "service": "payment", "level": "ERROR", "message": "Payment gateway returned 503", "trace_id": "trace_12346"}
+{"timestamp": "2024-01-20T10:32:00Z", "service": "payment", "level": "ERROR", "message": "Transaction failed: insufficient balance", "trace_id": "trace_12347"}
+{"timestamp": "2024-01-20T10:33:00Z", "service": "order", "level": "WARN", "message": "Order creation slow: 3.2s", "trace_id": "trace_12348"}
+{"timestamp": "2024-01-20T10:34:00Z", "service": "order", "level": "ERROR", "message": "Inventory check timeout", "trace_id": "trace_12349"}
+{"timestamp": "2024-01-20T10:35:00Z", "service": "user", "level": "ERROR", "message": "User authentication failed", "trace_id": "trace_12350"}
+{"timestamp": "2024-01-20T10:36:00Z", "service": "recommendation", "level": "ERROR", "message": "Model inference timeout", "trace_id": "trace_12351"}
+{"timestamp": "2024-01-20T10:37:00Z", "service": "payment", "level": "ERROR", "message": "Redis connection lost", "trace_id": "trace_12352"}
+{"timestamp": "2024-01-20T10:38:00Z", "service": "payment", "level": "ERROR", "message": "Payment processing failed: gateway timeout", "trace_id": "trace_12353"}
+{"timestamp": "2024-01-20T10:39:00Z", "service": "order", "level": "ERROR", "message": "Order status update failed", "trace_id": "trace_12354"}
+{"timestamp": "2024-01-20T10:40:00Z", "service": "payment", "level": "WARN", "message": "High latency detected: 2.5s", "trace_id": "trace_12355"}
+{"timestamp": "2024-01-20T10:41:00Z", "service": "user", "level": "ERROR", "message": "Session expired", "trace_id": "trace_12356"}
+{"timestamp": "2024-01-20T10:42:00Z", "service": "recommendation", "level": "WARN", "message": "Cache miss rate: 95%", "trace_id": "trace_12357"}
+{"timestamp": "2024-01-20T10:43:00Z", "service": "payment", "level": "ERROR", "message": "Database deadlock detected", "trace_id": "trace_12358"}
+{"timestamp": "2024-01-20T10:44:00Z", "service": "order", "level": "ERROR", "message": "Message queue connection failed", "trace_id": "trace_12359"}
+{"timestamp": "2024-01-20T10:45:00Z", "service": "user", "level": "WARN", "message": "Password reset rate limit exceeded", "trace_id": "trace_12360"}
+{"timestamp": "2024-01-20T10:46:00Z", "service": "payment", "level": "ERROR", "message": "Payment validation failed: invalid card number", "trace_id": "trace_12361"}
+{"timestamp": "2024-01-20T10:47:00Z", "service": "recommendation", "level": "ERROR", "message": "Feature extraction failed", "trace_id": "trace_12362"}
+{"timestamp": "2024-01-20T10:48:00Z", "service": "order", "level": "ERROR", "message": "Stock synchronization failed", "trace_id": "trace_12363"}
+{"timestamp": "2024-01-20T10:49:00Z", "service": "payment", "level": "ERROR", "message": "Refund processing timeout", "trace_id": "trace_12364"}
