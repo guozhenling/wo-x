@@ -1,11 +1,13 @@
-# tool_coordinator.py
 """
 工具协调器 - 智能管理多工具调用
 """
 import json
+import concurrent.futures
 from typing import List, Dict, Any, Optional
 from enum import Enum
 import logging
+
+from tools.tool_cache import ToolCache
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +32,7 @@ class ToolCoordinator:
     def __init__(self, agent):
         self.agent = agent
         self.execution_plan = []
+        self.cache = ToolCache(ttl=300)  # 5 分钟缓存
 
     def plan_tool_calls(
             self,
@@ -126,52 +129,140 @@ class ToolCoordinator:
 
     def execute_plan(self) -> Dict[str, Any]:
         """
-        执行工具调用计划
+        执行工具调用计划（支持并行和缓存）
 
-        按优先级和依赖关系执行
+        优化：
+        1. 没有依赖关系的工具并行执行
+        2. 相同查询命中缓存
+        3. 按依赖层级分批执行
         """
         results = {}
 
-        # 按优先级排序
-        sorted_plan = sorted(
-            self.execution_plan,
-            key=lambda x: (
-                0 if x['priority'] == ToolPriority.REQUIRED else
-                1 if x['priority'] == ToolPriority.IMPORTANT else 2
-            )
-        )
+        # 按优先级和依赖关系分组
+        independent_steps = []  # 无依赖的工具
+        dependent_steps = []    # 有依赖的工具
 
-        for step in sorted_plan:
+        for step in self.execution_plan:
+            if 'depends_on' in step and step['depends_on']:
+                dependent_steps.append(step)
+            else:
+                independent_steps.append(step)
+
+        # 第一批：并行执行无依赖的工具
+        if independent_steps:
+            logger.info(f"并行执行 {len(independent_steps)} 个无依赖工具")
+            batch_results = self._execute_batch_parallel(independent_steps)
+            results.update(batch_results)
+
+        # 第二批：执行有依赖的工具
+        for step in dependent_steps:
             tool_name = step['tool']
 
             # 检查依赖
-            if 'depends_on' in step:
-                missing_deps = [
-                    dep for dep in step['depends_on']
-                    if dep not in results
-                ]
-                if missing_deps:
-                    logger.warning(f"跳过 {tool_name}，缺少依赖: {missing_deps}")
-                    continue
+            missing_deps = [
+                dep for dep in step['depends_on']
+                if dep not in results
+            ]
+            if missing_deps:
+                logger.warning(f"跳过 {tool_name}，缺少依赖: {missing_deps}")
+                continue
 
             # 检查是否可以调用
             if not self.agent.trace.can_call_tool():
                 logger.warning(f"跳过 {tool_name}，调用次数超限")
                 continue
 
-            # 执行工具
-            logger.info(f"执行: {tool_name} ({step['reason']})")
-            result = self.agent._execute_tool_with_trace(
+            # 执行工具（带缓存）
+            result = self._execute_tool_with_cache(
                 tool_name,
-                json.dumps(step['arguments'])
+                step['arguments'],
+                step['reason']
             )
-
             results[tool_name] = result
 
-            # 根据结果调整后续计划
-            self._adjust_plan_based_on_result(tool_name, result)
+        # 输出缓存统计
+        logger.info(f"工具缓存统计: {self.cache}")
 
         return results
+
+    def _execute_batch_parallel(self, steps: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        并行执行一批工具
+
+        Args:
+            steps: 工具步骤列表
+
+        Returns:
+            工具执行结果
+        """
+        results = {}
+
+        # 使用 ThreadPoolExecutor 并行执行
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            # 提交所有任务
+            future_to_step = {}
+            for step in steps:
+                tool_name = step['tool']
+
+                # 检查是否可以调用
+                if not self.agent.trace.can_call_tool():
+                    logger.warning(f"跳过 {tool_name}，调用次数超限")
+                    continue
+
+                future = executor.submit(
+                    self._execute_tool_with_cache,
+                    tool_name,
+                    step['arguments'],
+                    step['reason']
+                )
+                future_to_step[future] = tool_name
+
+            # 收集结果
+            for future in concurrent.futures.as_completed(future_to_step):
+                tool_name = future_to_step[future]
+                try:
+                    result = future.result()
+                    results[tool_name] = result
+                except Exception as e:
+                    logger.error(f"工具 {tool_name} 执行异常: {e}")
+                    results[tool_name] = {"error": str(e)}
+
+        return results
+
+    def _execute_tool_with_cache(
+        self,
+        tool_name: str,
+        arguments: Dict[str, Any],
+        reason: str
+    ) -> Any:
+        """
+        执行工具（带缓存）
+
+        Args:
+            tool_name: 工具名称
+            arguments: 工具参数
+            reason: 调用原因
+
+        Returns:
+            工具执行结果
+        """
+        # 尝试从缓存获取
+        cached_result = self.cache.get(tool_name, arguments)
+        if cached_result is not None:
+            logger.info(f"✓ 缓存命中: {tool_name}")
+            return cached_result
+
+        # 缓存未命中，执行工具
+        logger.info(f"执行: {tool_name} ({reason})")
+        result = self.agent._execute_tool_with_trace(
+            tool_name,
+            json.dumps(arguments)
+        )
+
+        # 存入缓存
+        self.cache.set(tool_name, arguments, result)
+
+        return result
 
     def _get_log_search_args(self, description: str) -> Dict[str, Any]:
         """根据描述推断日志搜索参数"""
