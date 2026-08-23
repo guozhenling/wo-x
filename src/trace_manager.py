@@ -45,7 +45,7 @@ class TraceRecord:
 class TraceManager:
     """轨迹管理器"""
 
-    MAX_TOOL_CALLS = 2  # 最大工具调用次数
+    MAX_TOOL_CALLS = 10  # 最大工具调用次数（支持 ToolCoordinator 批量调用）
 
     def __init__(self, trace_dir: str = "traces"):
         """

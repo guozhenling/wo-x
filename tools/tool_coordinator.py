@@ -175,7 +175,7 @@ class ToolCoordinator:
 
     def _get_log_search_args(self, description: str) -> Dict[str, Any]:
         """根据描述推断日志搜索参数"""
-        args = {"level": "ERROR", "limit": 20}
+        args = {"keyword": "ERROR", "limit": 20}
 
         # 提取服务名
         services = ["payment", "order", "user", "recommendation"]
