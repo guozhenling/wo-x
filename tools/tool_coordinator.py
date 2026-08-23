@@ -88,6 +88,39 @@ class ToolCoordinator:
                 "reason": "可能与最近部署相关"
             })
 
+        # 规则 5: OOM/重启问题查 OOM 事件
+        if any(keyword in incident_description.lower() for keyword in
+               ["oom", "内存", "重启", "killed", "crash", "pod"]):
+            plan.append({
+                "tool": "search_oom_events",
+                "priority": ToolPriority.IMPORTANT,
+                "arguments": {"time_range": 120, "min_restart_count": 0},
+                "reason": "可能存在内存溢出问题"
+            })
+
+        # 规则 6: 延迟/超时问题查搜推广超时
+        if category == "latency" or any(keyword in incident_description.lower() for keyword in
+               ["超时", "延迟", "慢", "timeout", "latency", "推荐", "搜索", "广告"]):
+            # 识别服务类型
+            service = None
+            if "推荐" in incident_description or "recommendation" in incident_description.lower():
+                service = "recommendation"
+            elif "搜索" in incident_description or "search" in incident_description.lower():
+                service = "search"
+            elif "广告" in incident_description or "ad" in incident_description.lower():
+                service = "ad"
+
+            plan.append({
+                "tool": "search_timeout_events",
+                "priority": ToolPriority.IMPORTANT,
+                "arguments": {
+                    "time_range": 60,
+                    "service": service,
+                    "status": "timeout"  # 只查超时事件
+                },
+                "reason": "延迟问题需要分析超时事件"
+            })
+
         self.execution_plan = plan
         return plan
 
