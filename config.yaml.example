@@ -1,0 +1,44 @@
+# ============================================
+# Anthropic Claude API Configuration (当前使用)
+# ============================================
+api:
+  protocol: "anthropic"  # 使用 Anthropic 协议
+  api_key: "your-anthropic-api-key-here"
+  model: "claude-sonnet-4-20250514"  # Sonnet 5
+  temperature: 0.3
+  max_tokens: 4096
+
+# ============================================
+# OpenAI API Configuration (备选配置)
+# ============================================
+# api:
+#   protocol: "openai"  # 使用 OpenAI 协议
+#   base_url: "https://api.openai.com/v1"
+#   api_key: "your-openai-api-key-here"
+#   model: "gpt-4"
+#   temperature: 0.3
+#   max_tokens: 4096
+
+# ============================================
+# 配置说明
+# ============================================
+# protocol: "anthropic" 或 "openai"
+#   - anthropic: 使用 Claude 模型
+#   - openai: 使用 GPT 模型或兼容 OpenAI 协议的其他模型
+#
+# model: 模型名称
+#   Anthropic 模型:
+#     - claude-sonnet-4-20250514 (Sonnet 5, 推荐)
+#     - claude-opus-4-20250514 (Opus 5)
+#     - claude-3-5-sonnet-20241022 (Claude 3.5 Sonnet)
+#   OpenAI 模型:
+#     - gpt-4
+#     - gpt-3.5-turbo
+#
+# temperature: 0.0-1.0
+#   - 0.3: 推荐用于分类任务（更确定、更一致）
+#   - 0.7: 默认值（平衡）
+#   - 1.0: 更有创造性
+#
+# max_tokens: 最大输出 token 数
+#   - 建议 4096（足够输出详细的分类理由）

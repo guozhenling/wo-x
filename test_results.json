@@ -1,0 +1,411 @@
+{
+  "total": 20,
+  "accuracy": {
+    "severity": "90.0%",
+    "category": "85.0%",
+    "needs_human_review": "95.0%",
+    "overall": "75.0%"
+  },
+  "results": [
+    {
+      "case_id": 1,
+      "description": "支付接口 5xx 从 0.1% 升到 35%，持续 8 分钟",
+      "expected": {
+        "severity": "P0",
+        "category": "availability",
+        "needs_human_review": true
+      },
+      "actual": {
+        "severity": "P0",
+        "category": "availability",
+        "needs_human_review": true,
+        "rationale": "支付接口涉及核心收入功能，错误率从 0.1% 飙升至 35%，远超 P0 阈值（20%），直接影响交易完成和业务收入。5xx 错误表明服务端故障导致的可用性问题，且无明确指向数据库、部署或性能的具体原因，归类为 availability。由于涉及支付这一关键业务且错误率极高，必须立即人工介入处理。"
+      },
+      "match": {
+        "severity": true,
+        "category": true,
+        "needs_human_review": true
+      }
+    },
+    {
+      "case_id": 2,
+      "description": "主站完全无法访问，所有用户返回 502 Bad Gateway，DNS 解析正常",
+      "expected": {
+        "severity": "P0",
+        "category": "availability",
+        "needs_human_review": true
+      },
+      "actual": {
+        "severity": "P0",
+        "category": "availability",
+        "needs_human_review": true,
+        "rationale": "主站完全无法访问，所有用户返回 502 错误，属于全面服务中断，影响所有用户。DNS 解析正常说明问题在应用层或网关层，属于纯可用性问题。虽然 availability 优先级较低，但此故障不涉及数据库、部署、延迟等更高优先级类别的特征。作为 P0 级别的全站故障，必须立即人工介入处理。"
+      },
+      "match": {
+        "severity": true,
+        "category": true,
+        "needs_human_review": true
+      }
+    },
+    {
+      "case_id": 3,
+      "description": "订单系统数据库主库宕机，从库自动切换失败，无法创建新订单",
+      "expected": {
+        "severity": "P0",
+        "category": "database",
+        "needs_human_review": true
+      },
+      "actual": {
+        "severity": "P0",
+        "category": "database",
+        "needs_human_review": true,
+        "rationale": "订单系统数据库主库宕机导致无法创建新订单，直接影响核心收入功能，业务完全不可用。虽然表现为可用性问题，但根本原因是数据库故障（主库宕机+从库切换失败），按分类优先级应归为database。涉及订单交易的核心功能完全中断，属于P0紧急故障，必须立即人工介入处理。"
+      },
+      "match": {
+        "severity": true,
+        "category": true,
+        "needs_human_review": true
+      }
+    },
+    {
+      "case_id": 4,
+      "description": "用户登录认证服务崩溃，所有登录请求失败，影响 100% 用户",
+      "expected": {
+        "severity": "P0",
+        "category": "availability",
+        "needs_human_review": true
+      },
+      "actual": {
+        "severity": "P0",
+        "category": "availability",
+        "needs_human_review": true,
+        "rationale": "登录认证服务完全崩溃，导致 100% 用户无法登录，属于全面服务中断，符合 P0 紧急级别。归类为 availability 因为这是纯粹的服务崩溃导致的可用性问题。P0 级别故障必须立即人工介入处理。"
+      },
+      "match": {
+        "severity": true,
+        "category": true,
+        "needs_human_review": true
+      }
+    },
+    {
+      "case_id": 5,
+      "description": "Redis 集群全节点 OOM，缓存服务完全不可用，导致数据库压力剧增",
+      "expected": {
+        "severity": "P0",
+        "category": "database",
+        "needs_human_review": true
+      },
+      "actual": {
+        "severity": "P0",
+        "category": "database",
+        "needs_human_review": true,
+        "rationale": "Redis 集群全节点 OOM 导致缓存服务完全不可用，所有请求直接打到数据库，可能引发雪崩效应，影响所有或绝大多数用户的核心业务功能。属于 database 类别（Redis/缓存问题），作为 P0 级别的基础设施严重故障，必须立即人工介入处理。"
+      },
+      "match": {
+        "severity": true,
+        "category": true,
+        "needs_human_review": true
+      }
+    },
+    {
+      "case_id": 6,
+      "description": "搜索功能响应时间从 200ms 升至 5 秒，10% 用户超时",
+      "expected": {
+        "severity": "P1",
+        "category": "latency",
+        "needs_human_review": true
+      },
+      "actual": {
+        "severity": "P1",
+        "category": "latency",
+        "needs_human_review": true,
+        "rationale": "搜索功能响应时间从200ms激增至5秒，属于严重的性能降级问题。虽然错误率为10%（在5%-20%区间），但搜索通常是核心功能，影响大量用户体验。根据分类规则，这是典型的latency问题。判定为P1级别是因为：1）错误率10%在P1范围内；2）搜索是重要功能但不直接影响收入；3）用户可能通过刷新或等待作为替代方案。由于是P1级别故障且影响核心功能，needs_human_review设为true，需要人工立即介入排查根因（可能是数据库查询、索引、缓存等问题）。"
+      },
+      "match": {
+        "severity": true,
+        "category": true,
+        "needs_human_review": true
+      }
+    },
+    {
+      "case_id": 7,
+      "description": "移动端 API 错误率 12%，Web 端正常，初步怀疑是 CDN 问题",
+      "expected": {
+        "severity": "P1",
+        "category": "deployment",
+        "needs_human_review": true
+      },
+      "actual": {
+        "severity": "P1",
+        "category": "unknown",
+        "needs_human_review": true,
+        "rationale": "[Policy修正] 原因不明确，需进一步调查。错误率12%属于5%-20%区间，达到P1级别。虽然只影响移动端，但错误率较高且影响面大。CDN问题通常与静态资源加载、配置相关，应归类为deployment而非availability。作为P1级别故障，需要人工立即介入处理以快速定位CDN配置问题并恢复服务。"
+      },
+      "match": {
+        "severity": true,
+        "category": false,
+        "needs_human_review": true
+      }
+    },
+    {
+      "case_id": 8,
+      "description": "图片上传功能异常，成功率从 99% 降至 85%，影响内容创作用户",
+      "expected": {
+        "severity": "P1",
+        "category": "availability",
+        "needs_human_review": true
+      },
+      "actual": {
+        "severity": "P1",
+        "category": "availability",
+        "needs_human_review": true,
+        "rationale": "错误率为 15%（成功率从 99% 降至 85%），处于 5%-20% 区间。图片上传是内容创作用户的核心功能，15% 的失败率会严重影响用户体验和业务流程。虽未达到 P0 的紧急程度（未超过 20% 或涉及收入），但作为重要功能的严重降级，判定为 P1 高优先级。故障表现为服务部分不可用，归类为 availability。P1 级别故障需要人工立即介入处理。"
+      },
+      "match": {
+        "severity": true,
+        "category": true,
+        "needs_human_review": true
+      }
+    },
+    {
+      "case_id": 9,
+      "description": "数据库主从同步延迟达到 5 分钟，可能导致数据不一致",
+      "expected": {
+        "severity": "P1",
+        "category": "database",
+        "needs_human_review": true
+      },
+      "actual": {
+        "severity": "P1",
+        "category": "unknown",
+        "needs_human_review": true,
+        "rationale": "[Policy修正] 原因不明确，需进一步调查。数据库主从同步延迟5分钟属于数据库类故障。虽然不会直接导致服务不可用，但可能造成数据不一致，影响依赖从库读取的业务逻辑准确性。由于涉及数据一致性风险，且可能影响核心业务数据准确性，判定为P1高优先级，需要人工介入排查根因并修复。"
+      },
+      "match": {
+        "severity": true,
+        "category": false,
+        "needs_human_review": true
+      }
+    },
+    {
+      "case_id": 10,
+      "description": "消息队列积压 50 万条消息，消费速度远低于生产速度",
+      "expected": {
+        "severity": "P1",
+        "category": "latency",
+        "needs_human_review": true
+      },
+      "actual": {
+        "severity": "P1",
+        "category": "latency",
+        "needs_human_review": true,
+        "rationale": "消息队列积压50万条且消费速度远低于生产速度，属于典型的性能/延迟问题。虽然服务未完全中断，但积压持续增长会导致消息处理严重延迟，可能影响依赖消息队列的核心业务流程（如订单处理、通知发送等）。未达到P0级别是因为没有明确表明直接影响收入的核心功能错误率超过20%或完全不可用。判定为P1是因为这是重要功能的严重性能问题，影响范围可能较大且有扩散风险。needs_human_review设为true是因为需要人工分析积压原因（消费者故障、资源不足、消息激增等）并采取针对性措施。"
+      },
+      "match": {
+        "severity": true,
+        "category": true,
+        "needs_human_review": true
+      }
+    },
+    {
+      "case_id": 11,
+      "description": "管理后台导出功能偶尔失败，错误率约 3%，用户可以重试",
+      "expected": {
+        "severity": "P2",
+        "category": "availability",
+        "needs_human_review": false
+      },
+      "actual": {
+        "severity": "P2",
+        "category": "availability",
+        "needs_human_review": false,
+        "rationale": "错误率3%处于1%-5%区间，属于P2级别。管理后台导出功能为非核心功能，且用户可以通过重试解决。故障描述未涉及数据库、部署、延迟等明确问题，仅表现为功能偶发失败，归类为availability。作为P2级别的常规故障，影响有限且可自动重试恢复，无需人工介入。"
+      },
+      "match": {
+        "severity": true,
+        "category": true,
+        "needs_human_review": true
+      }
+    },
+    {
+      "case_id": 12,
+      "description": "邮件通知发送延迟，平均延迟 10 分钟，但最终都能送达",
+      "expected": {
+        "severity": "P2",
+        "category": "latency",
+        "needs_human_review": false
+      },
+      "actual": {
+        "severity": "P2",
+        "category": "latency",
+        "needs_human_review": false,
+        "rationale": "邮件通知属于非核心功能，虽然存在10分钟延迟但最终都能送达，说明功能可用且能自动完成。延迟问题影响用户体验但不影响业务核心流程，属于性能问题而非可用性问题。由于是非核心功能且影响有限，判定为P2中等优先级，可通过自动化监控和优化处理，无需人工立即介入。"
+      },
+      "match": {
+        "severity": true,
+        "category": true,
+        "needs_human_review": true
+      }
+    },
+    {
+      "case_id": 13,
+      "description": "推荐系统返回结果质量下降，部分用户反馈推荐不准确",
+      "expected": {
+        "severity": "P3",
+        "category": "unknown",
+        "needs_human_review": false
+      },
+      "actual": {
+        "severity": "P2",
+        "category": "unknown",
+        "needs_human_review": false,
+        "rationale": "推荐质量下降属于算法效果问题，不影响服务可用性和核心功能，仅部分用户反馈不准确，影响范围有限。无明确技术故障点（非数据库、部署、延迟或可用性问题），归类为 unknown。作为 P2 级别的非核心功能问题，可由算法团队后续分析优化，不需要立即人工介入。"
+      },
+      "match": {
+        "severity": false,
+        "category": true,
+        "needs_human_review": true
+      }
+    },
+    {
+      "case_id": 14,
+      "description": "非核心页面 CSS 加载失败，样式错乱但功能可用，影响约 2% 用户",
+      "expected": {
+        "severity": "P2",
+        "category": "deployment",
+        "needs_human_review": false
+      },
+      "actual": {
+        "severity": "P2",
+        "category": "deployment",
+        "needs_human_review": false,
+        "rationale": "非核心页面的静态资源加载问题，错误率2%处于P2范围（1%-5%），功能可用但样式异常。CSS加载失败属于部署相关问题，影响范围有限且不涉及核心业务，可自动化监控处理。"
+      },
+      "match": {
+        "severity": true,
+        "category": true,
+        "needs_human_review": true
+      }
+    },
+    {
+      "case_id": 15,
+      "description": "定时任务执行失败 2 次，第 3 次重试成功，日志显示偶发网络抖动",
+      "expected": {
+        "severity": "P2",
+        "category": "unknown",
+        "needs_human_review": false
+      },
+      "actual": {
+        "severity": "P2",
+        "category": "availability",
+        "needs_human_review": false,
+        "rationale": "偶发且能自动恢复的问题，定时任务最终执行成功，未造成业务影响。网络抖动导致的偶发失败属于非核心功能异常，影响有限。由于问题已自动恢复且不涉及数据库、部署或明确的性能问题，归类为 availability。作为 P2 级别的常规故障，无需人工介入。"
+      },
+      "match": {
+        "severity": true,
+        "category": false,
+        "needs_human_review": true
+      }
+    },
+    {
+      "case_id": 16,
+      "description": "404 错误日志量轻微上升，从每天 100 次增加到 150 次，可能是爬虫",
+      "expected": {
+        "severity": "P3",
+        "category": "unknown",
+        "needs_human_review": false
+      },
+      "actual": {
+        "severity": "P3",
+        "category": "unknown",
+        "needs_human_review": false,
+        "rationale": "404错误从100次增至150次，增幅50%但绝对数量很小，错误率远低于1%。描述提到可能是爬虫导致，说明这不是真实用户遇到的功能故障，而是外部访问行为变化。无明确的功能故障点，不影响用户体验，归类为unknown。作为P3级别的轻微异常，可自动化处理或稍后分析，无需人工介入。"
+      },
+      "match": {
+        "severity": true,
+        "category": true,
+        "needs_human_review": true
+      }
+    },
+    {
+      "case_id": 17,
+      "description": "某个不常用的统计报表生成速度变慢，从 5 秒增加到 15 秒",
+      "expected": {
+        "severity": "P3",
+        "category": "latency",
+        "needs_human_review": false
+      },
+      "actual": {
+        "severity": "P3",
+        "category": "latency",
+        "needs_human_review": false,
+        "rationale": "不常用的统计报表性能下降，从5秒增加到15秒，功能仍可正常使用，影响范围有限，属于轻微性能问题。不涉及核心业务，不影响用户主要体验，可稍后优化处理。"
+      },
+      "match": {
+        "severity": true,
+        "category": true,
+        "needs_human_review": true
+      }
+    },
+    {
+      "case_id": 18,
+      "description": "内部工具页面偶尔加载慢，影响 5 个内部员工，业务不受影响",
+      "expected": {
+        "severity": "P3",
+        "category": "latency",
+        "needs_human_review": false
+      },
+      "actual": {
+        "severity": "P3",
+        "category": "latency",
+        "needs_human_review": false,
+        "rationale": "仅影响 5 个内部员工，偶发性能问题，业务完全不受影响，错误率和影响范围都极低，符合 P3 低优先级标准。性能慢归类为 latency。作为低优先级内部工具问题，可自动化处理或稍后优化，无需人工立即介入。"
+      },
+      "match": {
+        "severity": true,
+        "category": true,
+        "needs_human_review": true
+      }
+    },
+    {
+      "case_id": 19,
+      "description": "日志文件磁盘占用增长，预计 7 天后达到 80% 阈值",
+      "expected": {
+        "severity": "P3",
+        "category": "unknown",
+        "needs_human_review": false
+      },
+      "actual": {
+        "severity": "P1",
+        "category": "unknown",
+        "needs_human_review": true,
+        "rationale": "日志磁盘占用增长是预测性问题，预计7天后才达到80%阈值，当前未影响任何功能或用户体验，属于低优先级运维问题。分类为unknown是因为这不属于database、deployment、latency或availability故障，而是日志管理和磁盘空间问题。可以通过自动化日志清理或扩容处理，不需要人工立即介入。"
+      },
+      "match": {
+        "severity": false,
+        "category": true,
+        "needs_human_review": false
+      }
+    },
+    {
+      "case_id": 20,
+      "description": "开发环境某个测试接口返回 500，生产环境正常",
+      "expected": {
+        "severity": "P3",
+        "category": "availability",
+        "needs_human_review": false
+      },
+      "actual": {
+        "severity": "P3",
+        "category": "availability",
+        "needs_human_review": false,
+        "rationale": "仅开发环境测试接口出现 500 错误，生产环境正常运行，未影响实际用户和业务。属于开发环境配置或数据问题，影响范围极小，错误率低，可以稍后处理。分类为 availability 是因为这是服务返回 5xx 错误的可用性问题，且不涉及数据库、部署、性能等更具体的类别。P3 级别的常规故障无需人工立即介入。"
+      },
+      "match": {
+        "severity": true,
+        "category": true,
+        "needs_human_review": true
+      }
+    }
+  ]
+}

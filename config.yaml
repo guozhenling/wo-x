@@ -1,0 +1,8 @@
+# 第三方 API 配置（使用 OpenAI 协议）
+api:
+  protocol: "openai"  # 第三方服务使用 openai 协议
+  base_url: "https://api.waibibabo.com/v1"
+  api_key: "sk-eceae4696b258ffb7a3f827ff57280386a8d43f76b3e1a0be7ddd34b4db04a63"
+  model: "claude-sonnet-5"
+  temperature: 0.3
+  max_tokens: 4096

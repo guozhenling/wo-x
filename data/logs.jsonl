@@ -1,0 +1,20 @@
+{"timestamp": "2026-08-18T10:00:00Z", "service": "payment", "level": "ERROR", "message": "Payment gateway timeout after 5s", "trace_id": "trace-001"}
+{"timestamp": "2026-08-18T10:01:00Z", "service": "payment", "level": "ERROR", "message": "Payment failed: insufficient funds", "trace_id": "trace-002"}
+{"timestamp": "2026-08-18T10:02:00Z", "service": "order", "level": "ERROR", "message": "Order creation failed: database connection timeout", "trace_id": "trace-003"}
+{"timestamp": "2026-08-18T10:03:00Z", "service": "order", "level": "WARN", "message": "Order processing slow: 3.2s", "trace_id": "trace-004"}
+{"timestamp": "2026-08-18T10:04:00Z", "service": "user", "level": "ERROR", "message": "User login failed: invalid token", "trace_id": "trace-005"}
+{"timestamp": "2026-08-18T10:05:00Z", "service": "user", "level": "INFO", "message": "User logged in successfully", "trace_id": "trace-006"}
+{"timestamp": "2026-08-18T10:06:00Z", "service": "payment", "level": "ERROR", "message": "Payment gateway connection refused", "trace_id": "trace-007"}
+{"timestamp": "2026-08-18T10:07:00Z", "service": "payment", "level": "ERROR", "message": "Payment processing error: invalid card number", "trace_id": "trace-008"}
+{"timestamp": "2026-08-18T10:08:00Z", "service": "order", "level": "ERROR", "message": "Order update failed: database deadlock", "trace_id": "trace-009"}
+{"timestamp": "2026-08-18T10:09:00Z", "service": "recommendation", "level": "WARN", "message": "Recommendation service latency high: 5.8s", "trace_id": "trace-010"}
+{"timestamp": "2026-08-18T10:10:00Z", "service": "payment", "level": "ERROR", "message": "Payment gateway timeout after 5s", "trace_id": "trace-011"}
+{"timestamp": "2026-08-18T10:11:00Z", "service": "payment", "level": "ERROR", "message": "Payment failed: gateway error 500", "trace_id": "trace-012"}
+{"timestamp": "2026-08-18T10:12:00Z", "service": "user", "level": "ERROR", "message": "User authentication failed: expired session", "trace_id": "trace-013"}
+{"timestamp": "2026-08-18T10:13:00Z", "service": "order", "level": "INFO", "message": "Order completed successfully", "trace_id": "trace-014"}
+{"timestamp": "2026-08-18T10:14:00Z", "service": "payment", "level": "ERROR", "message": "Payment timeout: no response from bank", "trace_id": "trace-015"}
+{"timestamp": "2026-08-18T10:15:00Z", "service": "payment", "level": "ERROR", "message": "Payment declined: risk check failed", "trace_id": "trace-016"}
+{"timestamp": "2026-08-18T10:16:00Z", "service": "order", "level": "ERROR", "message": "Order creation failed: inventory check timeout", "trace_id": "trace-017"}
+{"timestamp": "2026-08-18T10:17:00Z", "service": "recommendation", "level": "ERROR", "message": "Recommendation service unavailable", "trace_id": "trace-018"}
+{"timestamp": "2026-08-18T10:18:00Z", "service": "user", "level": "WARN", "message": "Multiple failed login attempts detected", "trace_id": "trace-019"}
+{"timestamp": "2026-08-18T10:19:00Z", "service": "payment", "level": "ERROR", "message": "Payment gateway error: connection pool exhausted", "trace_id": "trace-020"}

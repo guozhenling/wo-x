@@ -1,0 +1,182 @@
+id: RB-003
+title: 应用发布回滚手册
+keywords:
+  - 发布
+  - 回滚
+  - rollback
+  - deployment
+  - 部署
+  - 发版
+  - release
+  - 故障
+  - 错误率上升
+
+applicable_conditions: |
+  - 发布后错误率异常上升
+  - 发布后出现新的错误类型
+  - 用户反馈功能异常或无法使用
+  - 监控指标异常（响应时间、CPU、内存）
+  - 发布后服务启动失败或频繁重启
+
+check_steps:
+  - step: 1
+    title: 确认发布时间和版本
+    actions:
+      - 确认最近一次发布的时间
+      - 记录当前版本号和上一个稳定版本号
+      - 查看发布的变更内容（代码、配置、依赖）
+    commands:
+      - "查看发布记录：kubectl rollout history deployment/[service-name]"
+      - "查看当前版本：kubectl describe deployment/[service-name]"
+      - "查看 Git 提交记录：git log --oneline --since='2 hours ago'"
+
+  - step: 2
+    title: 评估影响范围和严重程度
+    actions:
+      - 查看错误率变化趋势（发布前 vs 发布后）
+      - 确认影响的功能模块和用户数量
+      - 检查是否有资损风险（支付、订单、库存）
+    commands:
+      - search_logs level=ERROR limit=50
+      - "查看监控面板：错误率、QPS、响应时间"
+      - "对比发布前后的关键指标"
+
+  - step: 3
+    title: 快速验证是否需要回滚
+    actions:
+      - 如果错误率 > 20%：立即回滚
+      - 如果涉及支付/订单且错误率 > 5%：立即回滚
+      - 如果新版本服务无法正常启动：立即回滚
+      - 如果错误率 < 5% 且不影响核心功能：继续排查，暂不回滚
+    decision_tree: |
+      错误率 > 20% 或核心功能不可用？
+        是 → 立即回滚（跳到 Step 4）
+        否 → 继续排查（Step 5）
+
+  - step: 4
+    title: 执行回滚操作
+    actions:
+      - 回滚到上一个稳定版本
+      - 验证回滚后服务是否恢复正常
+      - 通知相关团队回滚已完成
+    commands:
+      - "Kubernetes 回滚：kubectl rollout undo deployment/[service-name]"
+      - "Docker 回滚：docker service update --rollback [service-name]"
+      - "验证回滚：kubectl rollout status deployment/[service-name]"
+      - "检查新版本日志：kubectl logs -l app=[service-name] --tail=100"
+    caution: |
+      ⚠️ 回滚前注意：
+      - 如果新版本有数据库迁移（migration），需要先回滚数据库
+      - 如果有配置变更，需要同步回滚配置
+      - 回滚后立即验证核心功能是否恢复
+
+  - step: 5
+    title: 排查新版本问题（如果不立即回滚）
+    actions:
+      - 查看新版本的错误日志，定位具体错误
+      - 检查是否是配置问题（环境变量、配置文件）
+      - 检查依赖服务是否正常（数据库、Redis、API）
+      - 对比新旧版本的代码差异
+    commands:
+      - search_logs level=ERROR limit=50
+      - "查看环境变量：kubectl exec [pod-name] -- env | grep -i [关键配置]"
+      - "检查依赖连接：kubectl exec [pod-name] -- curl [依赖服务URL]"
+
+  - step: 6
+    title: 热修复（如果问题简单且可快速修复）
+    actions:
+      - 如果是配置错误：通过配置中心热更新
+      - 如果是小 bug：发布 hotfix 版本
+      - 如果是依赖问题：修复依赖后重启服务
+    commands:
+      - "配置热更新：通过配置中心更新配置"
+      - "重启服务：kubectl rollout restart deployment/[service-name]"
+    time_limit: |
+      热修复时间窗口：15 分钟
+      如果 15 分钟内无法修复，立即回滚
+
+  - step: 7
+    title: 回滚后的验证和总结
+    actions:
+      - 验证回滚后所有功能恢复正常
+      - 记录故障时间、影响范围、回滚时间
+      - 分析根因，制定防止再次发生的措施
+      - 编写故障报告（5W分析）
+    commands:
+      - "功能验证：执行冒烟测试"
+      - "监控验证：检查错误率、响应时间是否恢复正常"
+      - "记录故障：在故障管理系统创建事件"
+
+escalate_conditions: |
+  满足以下任一条件需要人工升级：
+
+  1. 紧急故障（P0 级别）：
+     - 核心服务完全不可用（错误率 > 50%）
+     - 支付、订单等涉及资金的功能异常
+     - 用户无法登录或注册
+     - 数据丢失或数据不一致
+
+  2. 回滚失败或不确定：
+     - 回滚操作失败，服务仍然异常
+     - 不确定应该回滚到哪个版本
+     - 回滚后问题依然存在
+     - 涉及数据库迁移的复杂回滚
+
+  3. 影响范围大：
+     - 影响多个微服务或整个系统
+     - 错误率持续 > 20% 超过 10 分钟
+     - 需要协调多个团队（后端、前端、运维）
+
+  4. 时间压力：
+     - 发生在业务高峰期（如双11、促销活动）
+     - 问题复杂，无法在 15 分钟内定位和修复
+     - 媒体或用户已经开始投诉
+
+  5. 需要紧急决策：
+     - 是否需要发布紧急公告
+     - 是否需要启用降级方案
+     - 是否需要联系云服务商或第三方服务
+
+decision_matrix: |
+  ┌─────────────────┬──────────────┬──────────────┐
+  │   错误率范围    │  核心功能    │  非核心功能  │
+  ├─────────────────┼──────────────┼──────────────┤
+  │   > 20%         │  立即回滚    │  立即回滚    │
+  │   10% - 20%     │  立即回滚    │  评估后决定  │
+  │   5% - 10%      │  评估后决定  │  继续观察    │
+  │   < 5%          │  继续观察    │  继续观察    │
+  └─────────────────┴──────────────┴──────────────┘
+
+  观察时间窗口：5-10 分钟
+  评估决策时间：3-5 分钟
+
+contact_info:
+  oncall: "运维团队 On-call: +86-xxx-xxxx-xxxx"
+  sre: "SRE 值班: +86-xxx-xxxx-xxxx"
+  release_manager: "发布负责人: +86-xxx-xxxx-xxxx"
+  escalation: "技术总监: +86-xxx-xxxx-xxxx"
+
+post_mortem_template: |
+  故障复盘模板：
+  1. 故障时间线（Timeline）
+     - 发布开始时间
+     - 问题发现时间
+     - 回滚开始时间
+     - 服务恢复时间
+
+  2. 影响范围（Impact）
+     - 影响的用户数/请求数
+     - 错误率峰值
+     - 持续时间
+     - 是否有资损
+
+  3. 根本原因（Root Cause）
+     - 代码问题/配置问题/依赖问题
+     - 为什么测试没有发现
+     - 为什么灰度发布没有拦住
+
+  4. 改进措施（Action Items）
+     - 代码层面的改进
+     - 测试流程的改进
+     - 监控告警的改进
+     - 发布流程的改进
