@@ -281,10 +281,10 @@ class ToolCoordinator:
         # 导入所有工具
         from tools.log_search import search_logs
         from tools.runbook_search import search_runbooks
-        from tools.slow_query import search_slow_queries
+        from tools.slow_query_search import search_slow_queries
         from tools.deployment_history import get_deployment_history
-        from tools.oom_events import search_oom_events
-        from tools.timeout_events import search_timeout_events
+        from tools.oom_search import search_oom_events
+        from tools.timeout_search import search_timeout_events
 
         tool_map = {
             "search_logs": search_logs,
