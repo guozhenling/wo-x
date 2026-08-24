@@ -271,7 +271,10 @@ class ToolCoordinator:
         )
 
         # 存入缓存（只缓存成功结果）
-        if not result.get("fallback"):
+        if isinstance(result, dict) and not result.get("fallback"):
+            self.cache.set(tool_name, arguments, result)
+        elif not isinstance(result, dict):
+            # 列表或其他类型也缓存
             self.cache.set(tool_name, arguments, result)
 
         return result

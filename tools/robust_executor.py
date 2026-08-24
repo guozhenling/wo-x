@@ -42,40 +42,41 @@ class CircuitBreakerOpenError(ToolExecutionError):
 
 # ==================== 装饰器 ====================
 
-@contextmanager
-def timeout_context(seconds: int):
-    """
-    超时上下文管理器
-
-    使用 signal.SIGALRM 实现超时
-    注意：不支持 Windows 和多线程环境
-    """
-    def timeout_handler(signum, frame):
-        raise TimeoutError(f"操作超时 ({seconds}s)")
-
-    # 保存旧的 handler
-    old_handler = signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(seconds)
-
-    try:
-        yield
-    finally:
-        # 恢复
-        signal.alarm(0)
-        signal.signal(signal.SIGALRM, old_handler)
-
-
 def with_timeout(seconds: int):
-    """超时装饰器"""
+    """
+    超时装饰器（线程安全版本）
+
+    使用 threading.Timer 实现，支持多线程环境
+    """
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            try:
-                with timeout_context(seconds):
-                    return func(*args, **kwargs)
-            except TimeoutError:
+            import threading
+
+            result = [None]
+            exception = [None]
+
+            def target():
+                try:
+                    result[0] = func(*args, **kwargs)
+                except Exception as e:
+                    exception[0] = e
+
+            thread = threading.Thread(target=target)
+            thread.daemon = True
+            thread.start()
+            thread.join(timeout=seconds)
+
+            if thread.is_alive():
+                # 超时了
                 logger.error(f"{func.__name__} 超时 ({seconds}s)")
-                raise
+                raise TimeoutError(f"操作超时 ({seconds}s)")
+
+            if exception[0]:
+                raise exception[0]
+
+            return result[0]
+
         return wrapper
     return decorator
 
