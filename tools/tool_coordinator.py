@@ -8,6 +8,7 @@ from enum import Enum
 import logging
 
 from tools.tool_cache import ToolCache
+from tools.robust_executor import RobustToolExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,7 @@ class ToolCoordinator:
         self.agent = agent
         self.execution_plan = []
         self.cache = ToolCache(ttl=300)  # 5 分钟缓存
+        self.robust_executor = RobustToolExecutor()  # 健壮执行器
 
     def plan_tool_calls(
             self,
@@ -236,7 +238,7 @@ class ToolCoordinator:
         reason: str
     ) -> Any:
         """
-        执行工具（带缓存）
+        执行工具（带缓存和健壮性保护）
 
         Args:
             tool_name: 工具名称
@@ -252,17 +254,51 @@ class ToolCoordinator:
             logger.info(f"✓ 缓存命中: {tool_name}")
             return cached_result
 
-        # 缓存未命中，执行工具
+        # 缓存未命中，使用健壮执行器执行工具
         logger.info(f"执行: {tool_name} ({reason})")
-        result = self.agent._execute_tool_with_trace(
-            tool_name,
-            json.dumps(arguments)
+
+        # 获取工具函数
+        tool_func = self._get_tool_function(tool_name)
+
+        # 使用健壮执行器（带超时、重试、降级）
+        result = self.robust_executor.execute(
+            tool_name=tool_name,
+            tool_function=tool_func,
+            arguments=arguments,
+            timeout_seconds=5,  # 5秒超时
+            max_retries=2,      # 最多重试2次
+            enable_cache=False  # 使用外部缓存，不用内部缓存
         )
 
-        # 存入缓存
-        self.cache.set(tool_name, arguments, result)
+        # 存入缓存（只缓存成功结果）
+        if not result.get("fallback"):
+            self.cache.set(tool_name, arguments, result)
 
         return result
+
+    def _get_tool_function(self, tool_name: str):
+        """获取工具函数"""
+        # 导入所有工具
+        from tools.log_search import search_logs
+        from tools.runbook_search import search_runbooks
+        from tools.slow_query import search_slow_queries
+        from tools.deployment_history import get_deployment_history
+        from tools.oom_events import search_oom_events
+        from tools.timeout_events import search_timeout_events
+
+        tool_map = {
+            "search_logs": search_logs,
+            "search_runbooks": search_runbooks,
+            "search_slow_queries": search_slow_queries,
+            "get_deployment_history": get_deployment_history,
+            "search_oom_events": search_oom_events,
+            "search_timeout_events": search_timeout_events,
+        }
+
+        if tool_name not in tool_map:
+            raise ValueError(f"未知工具: {tool_name}")
+
+        return tool_map[tool_name]
 
     def _get_log_search_args(self, description: str) -> Dict[str, Any]:
         """根据描述推断日志搜索参数"""
@@ -294,6 +330,13 @@ class ToolCoordinator:
                 for step in self.execution_plan:
                     if step['tool'] == 'search_runbooks':
                         step['priority'] = ToolPriority.REQUIRED
+
+    def get_execution_metrics(self) -> Dict[str, Any]:
+        """获取工具执行的性能指标"""
+        return {
+            "cache_stats": str(self.cache),
+            "robust_executor_metrics": self.robust_executor.get_metrics()
+        }
 
 
 # 测试
