@@ -1,0 +1,81 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: 测试与代码质量检查
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 设置 Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install openai python-dotenv pydantic pytest pytest-cov
+        pip install flake8 black
+
+    - name: 代码格式检查 (Black)
+      run: |
+        black --check src/ tests/ tools/ --line-length=120
+      continue-on-error: true
+
+    - name: 代码规范检查 (Flake8)
+      run: |
+        flake8 src/ tests/ tools/ --max-line-length=120 --ignore=E203,W503,E501
+      continue-on-error: true
+
+    - name: 运行单元测试
+      run: |
+        pytest tests/test_robust_executor.py tests/test_policy.py tests/test_models.py tests/test_trace_manager.py -v
+      continue-on-error: false
+
+    - name: 运行集成验证
+      run: |
+        python scripts/verify_integration.py
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+        OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
+      continue-on-error: true
+
+  security:
+    name: 安全扫描
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 设置 Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: 运行安全扫描 (Bandit)
+      run: |
+        pip install bandit
+        bandit -r src/ tools/ -ll
+      continue-on-error: true
+
+    - name: 依赖漏洞扫描 (Safety)
+      run: |
+        pip install safety
+        pip freeze | safety check --stdin
+      continue-on-error: true
