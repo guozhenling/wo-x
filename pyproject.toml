@@ -1,0 +1,21 @@
+[tool.black]
+line-length = 120
+target-version = ['py310', 'py311', 'py312']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | venv-3.13
+  | build
+  | dist
+  | __pycache__
+)/
+'''
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+addopts = "-v --tb=short"
