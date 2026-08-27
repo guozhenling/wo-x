@@ -67,35 +67,29 @@ class TestTraceManager:
     # ==================== 调用次数限制测试 ====================
 
     def test_max_tool_calls_limit(self):
-        """测试最大调用次数限制（2次）"""
+        """测试最大调用次数限制（10次）"""
         self.manager.start_trace("测试")
 
-        # 第 1 次调用 - 成功
-        result1 = self.manager.record_tool_call(
-            tool_name="tool1",
-            tool_input={},
-            tool_output="result1"
-        )
-        assert result1 is True
-        assert self.manager.can_call_tool() is True
+        # 调用 10 次 - 全部成功
+        for i in range(10):
+            result = self.manager.record_tool_call(
+                tool_name=f"tool{i+1}",
+                tool_input={},
+                tool_output=f"result{i+1}"
+            )
+            assert result is True
 
-        # 第 2 次调用 - 成功
-        result2 = self.manager.record_tool_call(
-            tool_name="tool2",
-            tool_input={},
-            tool_output="result2"
-        )
-        assert result2 is True
+        # 第 10 次后应该不能再调用
         assert self.manager.can_call_tool() is False
 
-        # 第 3 次调用 - 失败
-        result3 = self.manager.record_tool_call(
-            tool_name="tool3",
+        # 第 11 次调用 - 失败
+        result11 = self.manager.record_tool_call(
+            tool_name="tool11",
             tool_input={},
-            tool_output="result3"
+            tool_output="result11"
         )
-        assert result3 is False
-        assert self.manager.tool_call_count == 2  # 仍然是 2
+        assert result11 is False
+        assert self.manager.tool_call_count == 10  # 仍然是 10
         assert self.manager.current_trace.max_tool_calls_reached is True
 
     def test_tool_call_count_increment(self):
@@ -235,7 +229,7 @@ class TestTraceManager:
         assert data["tool_calls"][1]["tool_name"] == "policy_engine"
         assert data["final_answer"] == final_answer
         assert data["status"] == "success"
-        assert data["max_tool_calls_limit"] == 2
+        assert data["max_tool_calls_limit"] == 10
 
 
 if __name__ == "__main__":
