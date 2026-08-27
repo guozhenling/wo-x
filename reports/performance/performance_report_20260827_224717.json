@@ -1,0 +1,139 @@
+{
+  "timestamp": "2026-08-27T22:47:17.673263",
+  "summary": {
+    "total_tests": 10,
+    "successful_tests": 0,
+    "failed_tests": 10,
+    "success_rate": 0.0
+  },
+  "performance": {
+    "avg_duration": 0,
+    "min_duration": 0,
+    "max_duration": 0,
+    "avg_tool_calls": 0,
+    "avg_tool_success_rate": 0,
+    "avg_cache_hit_rate": 0
+  },
+  "details": [
+    {
+      "label": "P0-支付故障",
+      "description": "支付接口 5xx 错误率从 0.1% 升到 35%，持续 10 分钟",
+      "duration": 5.635,
+      "success": false,
+      "severity": "P3",
+      "category": "unknown",
+      "tool_calls": 0,
+      "success_rate": 0,
+      "cache_hit_rate": 0,
+      "avg_tool_time": 0
+    },
+    {
+      "label": "P1-延迟问题",
+      "description": "推荐系统 P99 延迟从 500ms 升至 2 秒，超时率 15%",
+      "duration": 2.008,
+      "success": false,
+      "severity": "P3",
+      "category": "unknown",
+      "tool_calls": 0,
+      "success_rate": 0,
+      "cache_hit_rate": 0,
+      "avg_tool_time": 0
+    },
+    {
+      "label": "P1-数据库死锁",
+      "description": "MySQL 报 1205 死锁错误，影响订单创建，每分钟 20 次",
+      "duration": 2.362,
+      "success": false,
+      "severity": "P3",
+      "category": "unknown",
+      "tool_calls": 0,
+      "success_rate": 0,
+      "cache_hit_rate": 0,
+      "avg_tool_time": 0
+    },
+    {
+      "label": "P1-OOM问题",
+      "description": "recommendation 服务 Pod 频繁 OOMKilled，重启 5 次",
+      "duration": 2.32,
+      "success": false,
+      "severity": "P3",
+      "category": "unknown",
+      "tool_calls": 0,
+      "success_rate": 0,
+      "cache_hit_rate": 0,
+      "avg_tool_time": 0
+    },
+    {
+      "label": "P2-小故障",
+      "description": "用户头像上传偶尔失败，错误率 2%",
+      "duration": 2.312,
+      "success": false,
+      "severity": "P3",
+      "category": "unknown",
+      "tool_calls": 0,
+      "success_rate": 0,
+      "cache_hit_rate": 0,
+      "avg_tool_time": 0
+    },
+    {
+      "label": "P3-低错误率",
+      "description": "日志中发现少量 404 错误，错误率 0.5%，已恢复",
+      "duration": 2.611,
+      "success": false,
+      "severity": "P3",
+      "category": "unknown",
+      "tool_calls": 0,
+      "success_rate": 0,
+      "cache_hit_rate": 0,
+      "avg_tool_time": 0
+    },
+    {
+      "label": "P1-搜索超时",
+      "description": "搜索接口超时率 20%，影响用户体验",
+      "duration": 3.338,
+      "success": false,
+      "severity": "P3",
+      "category": "unknown",
+      "tool_calls": 0,
+      "success_rate": 0,
+      "cache_hit_rate": 0,
+      "avg_tool_time": 0
+    },
+    {
+      "label": "P1-广告延迟",
+      "description": "广告服务响应缓慢，P95 延迟 3 秒",
+      "duration": 4.011,
+      "success": false,
+      "severity": "P3",
+      "category": "unknown",
+      "tool_calls": 0,
+      "success_rate": 0,
+      "cache_hit_rate": 0,
+      "avg_tool_time": 0
+    },
+    {
+      "label": "P1-部署问题",
+      "description": "订单服务部署后错误率上升到 5%",
+      "duration": 4.587,
+      "success": false,
+      "severity": "P3",
+      "category": "unknown",
+      "tool_calls": 0,
+      "success_rate": 0,
+      "cache_hit_rate": 0,
+      "avg_tool_time": 0
+    },
+    {
+      "label": "P1-慢查询",
+      "description": "数据库慢查询数量激增，最慢查询 10 秒",
+      "duration": 5.006,
+      "success": false,
+      "severity": "P3",
+      "category": "unknown",
+      "tool_calls": 0,
+      "success_rate": 0,
+      "cache_hit_rate": 0,
+      "avg_tool_time": 0
+    }
+  ]
+}
