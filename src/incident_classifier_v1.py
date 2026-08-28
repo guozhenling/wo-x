@@ -465,6 +465,7 @@ needs_human_review 判断：
         # 获取轨迹摘要
         trace_summary = self.trace.get_summary()
 
+        # 构建报告
         return {
             "version": self.VERSION,
             "timestamp": datetime.now().isoformat(),
@@ -496,7 +497,7 @@ needs_human_review 判断：
             },
             "trace": {
                 "trace_id": self.trace.current_trace.trace_id if self.trace.current_trace else None,
-                "total_calls": trace_summary['total_tool_calls'],
+                "total_calls": self.trace.tool_call_count,
                 "file": None  # 将在 classify() 中填充
             },
             "success": True
