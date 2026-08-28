@@ -42,7 +42,7 @@ jobs:
 
     - name: 运行单元测试
       run: |
-        pytest tests/ --ignore=tests/test_e2e_integration.py -v
+        pytest tests/ --ignore-glob='tests/test_e2e*.py' -v
       continue-on-error: false
 
     - name: 运行集成验证
