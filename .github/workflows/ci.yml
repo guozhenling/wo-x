@@ -42,7 +42,7 @@ jobs:
 
     - name: 运行单元测试
       run: |
-        pytest tests/test_robust_executor.py tests/test_policy.py tests/test_models.py tests/test_trace_manager.py -v
+        pytest tests/ --ignore=tests/test_e2e_integration.py -v
       continue-on-error: false
 
     - name: 运行集成验证
