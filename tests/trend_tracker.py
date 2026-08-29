@@ -7,8 +7,14 @@ import json
 from typing import List, Dict, Any
 from pathlib import Path
 from datetime import datetime
-import matplotlib.pyplot as plt
 from dataclasses import dataclass
+
+# matplotlib 是可选依赖
+try:
+    import matplotlib.pyplot as plt
+    HAS_MATPLOTLIB = True
+except ImportError:
+    HAS_MATPLOTLIB = False
 
 
 @dataclass
@@ -216,6 +222,11 @@ class TrendTracker:
         Args:
             output_file: 输出文件路径
         """
+        if not HAS_MATPLOTLIB:
+            print("⚠️ 需要安装 matplotlib 才能生成趋势图")
+            print("   安装命令: pip install matplotlib")
+            return
+
         if len(self.history) < 2:
             print("⚠️ 需要至少 2 次评测才能生成趋势图")
             return

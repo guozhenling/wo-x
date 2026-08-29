@@ -16,3 +16,7 @@ flake8>=6.0.0
 # Security
 bandit>=1.7.5
 safety>=2.3.0
+
+# Optional: For trend chart visualization (Level 3)
+# Uncomment if you need to generate trend charts
+# matplotlib>=3.7.0
