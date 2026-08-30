@@ -26,7 +26,7 @@ def test_normal_execution():
 
     agent = IncidentAgentV2()
 
-    result = agent.diagnose("支付接口 5xx 错误率 35%")
+    result = agent.analyze("支付接口 5xx 错误率 35%")
 
     print(f"\n诊断结果:")
     print(f"  严重程度: {result['severity']}")
@@ -55,12 +55,12 @@ def test_with_cache():
 
     # 第一次诊断
     print("\n第一次诊断:")
-    result1 = agent.diagnose("推荐服务超时率 15%")
+    result1 = agent.analyze("推荐服务超时率 15%")
     print(f"  严重程度: {result1['severity']}")
 
     # 第二次诊断（相同问题，应该命中缓存）
     print("\n第二次诊断（相同问题）:")
-    result2 = agent.diagnose("推荐服务超时率 15%")
+    result2 = agent.analyze("推荐服务超时率 15%")
     print(f"  严重程度: {result2['severity']}")
 
     # 获取指标
@@ -90,7 +90,7 @@ def test_multiple_diagnoses():
 
     for i, case in enumerate(test_cases, 1):
         print(f"\n案例 {i}: {case}")
-        result = agent.diagnose(case)
+        result = agent.analyze(case)
         print(f"  → {result['severity']} | {result['category']}")
 
     # 最终指标
