@@ -95,7 +95,7 @@ class ConfigValidator:
         critical_files = [
             "src/incident_classifier_v1.py",
             "src/policy.py",
-            "src/trace.py",
+            "src/trace_manager.py",
         ]
 
         for file_path in critical_files:
