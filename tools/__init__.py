@@ -12,8 +12,8 @@ from .log_search import search_logs
 from .runbook_search import search_runbooks
 from .deployment_history import get_deployment_history
 from .slow_query_search import search_slow_queries
-from .timeout_search import search_timeout_issues
-from .oom_search import search_oom_issues
+from .timeout_search import search_timeout_events
+from .oom_search import search_oom_events
 
 # Day 17-18 分析工具
 from .config_validator import ConfigValidator
@@ -28,8 +28,8 @@ __all__ = [
     "search_runbooks",
     "get_deployment_history",
     "search_slow_queries",
-    "search_timeout_issues",
-    "search_oom_issues",
+    "search_timeout_events",
+    "search_oom_events",
 
     # 分析工具
     "ConfigValidator",
