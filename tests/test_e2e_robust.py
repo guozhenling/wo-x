@@ -8,7 +8,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import logging
-from src.agent_v2 import AgentV2
+from src.agent_v2 import IncidentAgentV2
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,7 +24,7 @@ def test_normal_execution():
     print("测试1: 正常执行流程")
     print("=" * 60)
 
-    agent = AgentV2()
+    agent = IncidentAgentV2()
 
     result = agent.diagnose("支付接口 5xx 错误率 35%")
 
@@ -51,7 +51,7 @@ def test_with_cache():
     print("测试2: 缓存机制")
     print("=" * 60)
 
-    agent = AgentV2()
+    agent = IncidentAgentV2()
 
     # 第一次诊断
     print("\n第一次诊断:")
@@ -78,7 +78,7 @@ def test_multiple_diagnoses():
     print("测试3: 多次诊断")
     print("=" * 60)
 
-    agent = AgentV2()
+    agent = IncidentAgentV2()
 
     test_cases = [
         "支付服务 OOM 持续重启",

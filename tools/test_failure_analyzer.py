@@ -20,6 +20,9 @@ class TestFailureAnalyzer:
                 "rate limit",
                 "authentication"
             ],
+            "collection_error": [
+                "ERROR collecting"
+            ],
             "type_error": [
                 "TypeError",
                 "string indices must be integers"
@@ -48,7 +51,7 @@ class TestFailureAnalyzer:
         Returns:
             分析结果
         """
-        # 提取失败的测试
+        # 提取失败的测试（FAILED）
         failed_tests = re.findall(
             r'FAILED (tests/\S+)::(.*?) -',
             output
@@ -61,6 +64,16 @@ class TestFailureAnalyzer:
                 output
             )
             failed_tests = [(test, "") for test in failed_tests]
+
+        # 提取收集错误（ERROR）
+        error_tests = re.findall(
+            r'ERROR (tests/\S+)',
+            output
+        )
+        error_tests = [(test, "collection error") for test in error_tests]
+
+        # 合并所有失败
+        all_failures = failed_tests + error_tests
 
         # 提取错误类型
         errors = re.findall(
@@ -75,11 +88,17 @@ class TestFailureAnalyzer:
             "attribute_error": [],
             "import_error": [],
             "assertion_error": [],
+            "collection_error": [],
             "other": []
         }
 
-        for test_path, test_name in failed_tests:
-            full_name = f"{test_path}::{test_name}" if test_name else test_path
+        for test_path, test_name in all_failures:
+            full_name = f"{test_path}::{test_name}" if test_name and test_name != "collection error" else test_path
+
+            # 检查是否是收集错误
+            if test_name == "collection error":
+                failure_types["collection_error"].append(full_name)
+                continue
 
             # 检查是否是 API 相关
             if any(keyword in output for keyword in self.failure_patterns["api_required"]):
@@ -110,11 +129,11 @@ class TestFailureAnalyzer:
         key_errors = self._extract_key_errors(output)
 
         return {
-            "total_failures": len(failed_tests),
+            "total_failures": len(all_failures),
             "failure_types": failure_types,
             "suggestions": suggestions,
             "key_errors": key_errors,
-            "summary": self._generate_summary(len(failed_tests), failure_types)
+            "summary": self._generate_summary(len(all_failures), failure_types)
         }
 
     def _generate_suggestions(
@@ -141,6 +160,22 @@ class TestFailureAnalyzer:
                     "   pytest --ignore-glob='tests/test_e2e*.py' \\\n"
                     "          --ignore-glob='tests/test_agent*.py' \\\n"
                     "          --ignore-glob='tests/test_api*.py'"
+                )
+            })
+
+        # 收集错误
+        if failure_types["collection_error"]:
+            suggestions.append({
+                "type": "测试收集错误",
+                "priority": "high",
+                "count": len(failure_types["collection_error"]),
+                "tests": failure_types["collection_error"],
+                "suggestion": (
+                    "测试文件无法加载。检查以下内容：\n"
+                    "1. 导入错误（缺少依赖或路径错误）\n"
+                    "2. 语法错误\n"
+                    "3. 测试文件中的初始化代码错误\n"
+                    "4. 使用 pytest tests/filename.py -v 单独测试该文件"
                 )
             })
 
@@ -304,20 +339,33 @@ class TestFailureAnalyzer:
 
 if __name__ == "__main__":
     """
-    使用示例
+    命令行使用
     """
-    print("测试失败分析工具使用示例:")
-    print("\n# 方式 1: 分析 pytest 输出")
-    print("pytest tests/ -v > test_output.txt 2>&1")
-    print("python tools/test_failure_analyzer.py test_output.txt")
-    print("")
-    print("# 方式 2: 在代码中使用")
-    print("from tools.test_failure_analyzer import TestFailureAnalyzer")
-    print("")
-    print("analyzer = TestFailureAnalyzer()")
-    print("analysis = analyzer.analyze_from_file('test_output.txt')")
-    print("analyzer.print_analysis(analysis)")
-    print("")
-    print("# 方式 3: 直接分析文本")
-    print("output = subprocess.check_output(['pytest', 'tests/', '-v'])")
-    print("analysis = analyzer.analyze_pytest_output(output.decode())")
+    import sys
+
+    if len(sys.argv) < 2:
+        print("测试失败分析工具使用示例:")
+        print("\n# 方式 1: 分析 pytest 输出")
+        print("pytest tests/ -v > test_output.txt 2>&1")
+        print("python tools/test_failure_analyzer.py test_output.txt")
+        print("")
+        print("# 方式 2: 在代码中使用")
+        print("from tools.test_failure_analyzer import TestFailureAnalyzer")
+        print("")
+        print("analyzer = TestFailureAnalyzer()")
+        print("analysis = analyzer.analyze_from_file('test_output.txt')")
+        print("analyzer.print_analysis(analysis)")
+        sys.exit(1)
+
+    # 分析文件
+    filepath = sys.argv[1]
+
+    if not Path(filepath).exists():
+        print(f"\n❌ 文件不存在: {filepath}")
+        sys.exit(1)
+
+    analyzer = TestFailureAnalyzer()
+    analysis = analyzer.analyze_from_file(filepath)
+    analyzer.print_analysis(analysis)
+
+    sys.exit(0 if analysis["total_failures"] == 0 else 1)
