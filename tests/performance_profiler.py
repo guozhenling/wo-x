@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 import json
 
-from tests.test_cases import TestCase
+from tests.test_cases import EvaluationTestCase
 from tests.evaluation_framework import EvaluationReport
 
 

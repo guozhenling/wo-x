@@ -10,7 +10,7 @@ from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from pathlib import Path
 
-from tests.test_cases import TestCase, get_all_cases
+from tests.test_cases import EvaluationTestCase, get_all_cases
 
 
 @dataclass
