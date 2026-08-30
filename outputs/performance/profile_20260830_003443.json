@@ -1,0 +1,38 @@
+{
+  "report_id": "20260830_003443",
+  "metrics": {
+    "latency": {
+      "avg": 14.129152883802142,
+      "p50": 13.64700198173523,
+      "p95": 23.126413106918335,
+      "p99": 23.87350082397461,
+      "min": 9.625740051269531,
+      "max": 23.87350082397461
+    },
+    "api_usage": {
+      "total_calls": 0,
+      "avg_calls_per_request": 0
+    }
+  },
+  "bottleneck": {
+    "type": "high_latency",
+    "description": "P95 延迟偏高 (23.1s)",
+    "impact": "用户等待时间较长",
+    "severity": "medium"
+  },
+  "suggestions": [
+    {
+      "priority": 2,
+      "category": "延迟优化",
+      "title": "P95 延迟偏高，建议优化",
+      "current": "P95 = 23.1s",
+      "target": "P95 < 15s",
+      "methods": [
+        "检查是否有慢工具（增加缓存）",
+        "优化 LLM 调用次数（合并步骤）",
+        "调整工具超时时间（当前 5s）"
+      ]
+    }
+  ],
+  "summary": "平均延迟: 14.1s\nP95 延迟: 23.1s\n\n⚠️ 性能瓶颈: P95 延迟偏高 (23.1s)"
+}

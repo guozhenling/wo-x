@@ -9,6 +9,7 @@ import logging
 
 from tools.tool_cache import ToolCache
 from tools.robust_executor import RobustToolExecutor
+from tools.performance_metrics import get_collector
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,7 @@ class ToolCoordinator:
         self.execution_plan = []
         self.cache = ToolCache(ttl=300)  # 5 分钟缓存
         self.robust_executor = RobustToolExecutor()  # 健壮执行器
+        self.collector = get_collector()  # 性能收集器
 
     def plan_tool_calls(
             self,
@@ -138,6 +140,9 @@ class ToolCoordinator:
         2. 相同查询命中缓存
         3. 按依赖层级分批执行
         """
+        # 开始工具执行计时
+        self.collector.start_step("tool_execution")
+
         results = {}
 
         # 按优先级和依赖关系分组
@@ -184,6 +189,9 @@ class ToolCoordinator:
 
         # 输出缓存统计
         logger.info(f"工具缓存统计: {self.cache}")
+
+        # 结束工具执行计时
+        self.collector.end_step("tool_execution")
 
         return results
 
@@ -252,9 +260,14 @@ class ToolCoordinator:
         cached_result = self.cache.get(tool_name, arguments)
         if cached_result is not None:
             logger.info(f"✓ 缓存命中: {tool_name}")
+            self.collector.record_cache_hit()
             return cached_result
 
-        # 缓存未命中，使用健壮执行器执行工具
+        # 缓存未命中
+        self.collector.record_cache_miss()
+        self.collector.record_tool_call()
+
+        # 使用健壮执行器执行工具
         logger.info(f"执行: {tool_name} ({reason})")
 
         # 获取工具函数

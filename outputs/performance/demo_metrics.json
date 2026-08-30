@@ -1,0 +1,14 @@
+{
+  "total_duration": 0.47592902183532715,
+  "step_durations": {
+    "initial_classification": 0.11004209518432617,
+    "tool_execution": 0.21007513999938965,
+    "final_analysis": 0.15581178665161133
+  },
+  "llm_calls": 2,
+  "tool_calls": 3,
+  "cache_hits": 1,
+  "cache_misses": 2,
+  "cache_hit_rate": 0.3333333333333333,
+  "timestamp": "2026-08-30T14:14:17.202214"
+}

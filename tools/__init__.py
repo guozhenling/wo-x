@@ -23,6 +23,12 @@ from .robust_executor import RobustToolExecutor
 from .config_validator import ConfigValidator
 from .test_failure_analyzer import TestFailureAnalyzer
 
+# Day 19-20 性能优化工具
+from .performance_metrics import PerformanceCollector, PerformanceMetrics, get_collector
+from .benchmark import PerformanceBenchmark
+from .cache_warmup import CacheWarmup
+from .async_executor import AsyncExecutor, TaskStatus, TaskResult
+
 __all__ = [
     # 工具定义
     "get_all_tool_definitions",
@@ -40,7 +46,17 @@ __all__ = [
     "execute_tool",
     "RobustToolExecutor",
 
-    # 分析工具
+    # Day 17-18 分析工具
     "ConfigValidator",
     "TestFailureAnalyzer",
+
+    # Day 19-20 性能工具
+    "PerformanceCollector",
+    "PerformanceMetrics",
+    "get_collector",
+    "PerformanceBenchmark",
+    "CacheWarmup",
+    "AsyncExecutor",
+    "TaskStatus",
+    "TaskResult",
 ]
