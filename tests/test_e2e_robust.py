@@ -31,11 +31,11 @@ def test_normal_execution():
     print(f"\n诊断结果:")
     print(f"  严重程度: {result['classification']['severity']}")
     print(f"  分类: {result['classification']['category']}")
-    print(f"  根因: {result['classification']['root_cause']}")
-    print(f"  建议: {result['classification']['recommendation'][:100]}...")
+    if 'rationale' in result['classification']:
+        print(f"  理由: {result['classification']['rationale'][:100]}...")
 
     # 获取执行指标
-    metrics = agent.tool_coordinator.get_execution_metrics()
+    metrics = agent.coordinator.get_execution_metrics()
     print(f"\n执行指标:")
     print(f"  缓存: {metrics['cache_stats']}")
     robust_metrics = metrics['robust_executor_metrics']
@@ -64,7 +64,7 @@ def test_with_cache():
     print(f"  严重程度: {result2['classification']['severity']}")
 
     # 获取指标
-    metrics = agent.tool_coordinator.get_execution_metrics()
+    metrics = agent.coordinator.get_execution_metrics()
     robust_metrics = metrics['robust_executor_metrics']
     print(f"\n缓存效果:")
     print(f"  总调用: {robust_metrics['total_calls']}")
@@ -94,7 +94,7 @@ def test_multiple_diagnoses():
         print(f"  → {result['classification']['severity']} | {result['classification']['category']}")
 
     # 最终指标
-    metrics = agent.tool_coordinator.get_execution_metrics()
+    metrics = agent.coordinator.get_execution_metrics()
     robust_metrics = metrics['robust_executor_metrics']
 
     print(f"\n" + "=" * 60)
