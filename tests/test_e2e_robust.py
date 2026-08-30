@@ -29,10 +29,10 @@ def test_normal_execution():
     result = agent.analyze("支付接口 5xx 错误率 35%")
 
     print(f"\n诊断结果:")
-    print(f"  严重程度: {result['severity']}")
-    print(f"  分类: {result['category']}")
-    print(f"  根因: {result['root_cause']}")
-    print(f"  建议: {result['recommendation'][:100]}...")
+    print(f"  严重程度: {result['classification']['severity']}")
+    print(f"  分类: {result['classification']['category']}")
+    print(f"  根因: {result['classification']['root_cause']}")
+    print(f"  建议: {result['classification']['recommendation'][:100]}...")
 
     # 获取执行指标
     metrics = agent.tool_coordinator.get_execution_metrics()
@@ -56,12 +56,12 @@ def test_with_cache():
     # 第一次诊断
     print("\n第一次诊断:")
     result1 = agent.analyze("推荐服务超时率 15%")
-    print(f"  严重程度: {result1['severity']}")
+    print(f"  严重程度: {result1['classification']['severity']}")
 
     # 第二次诊断（相同问题，应该命中缓存）
     print("\n第二次诊断（相同问题）:")
     result2 = agent.analyze("推荐服务超时率 15%")
-    print(f"  严重程度: {result2['severity']}")
+    print(f"  严重程度: {result2['classification']['severity']}")
 
     # 获取指标
     metrics = agent.tool_coordinator.get_execution_metrics()
@@ -91,7 +91,7 @@ def test_multiple_diagnoses():
     for i, case in enumerate(test_cases, 1):
         print(f"\n案例 {i}: {case}")
         result = agent.analyze(case)
-        print(f"  → {result['severity']} | {result['category']}")
+        print(f"  → {result['classification']['severity']} | {result['classification']['category']}")
 
     # 最终指标
     metrics = agent.tool_coordinator.get_execution_metrics()
