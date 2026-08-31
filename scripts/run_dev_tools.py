@@ -36,7 +36,9 @@ def main():
         from dotenv import load_dotenv
         load_dotenv()
 
-        validator = ConfigValidator()
+        # 传入项目根目录
+        project_root = Path(__file__).parent.parent
+        validator = ConfigValidator(project_root=project_root)
 
         print("\n选择验证模式:")
         print("  1. 快速验证（仅检查配置文件）")
@@ -87,7 +89,9 @@ def main():
         from dotenv import load_dotenv
         load_dotenv()
 
-        validator = ConfigValidator()
+        # 传入项目根目录
+        project_root = Path(__file__).parent.parent
+        validator = ConfigValidator(project_root=project_root)
         results = validator.validate()
         validator.print_results(results)
 

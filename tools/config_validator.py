@@ -11,7 +11,15 @@ from pathlib import Path
 class ConfigValidator:
     """配置验证器"""
 
-    def __init__(self):
+    def __init__(self, project_root: Path = None):
+        """
+        初始化配置验证器
+
+        Args:
+            project_root: 项目根目录，默认为当前工作目录
+        """
+        self.project_root = project_root or Path.cwd()
+
         self.required_configs = {
             "OPENAI_API_KEY": "OpenAI API 密钥",
         }
@@ -36,7 +44,7 @@ class ConfigValidator:
         }
 
         # 检查 .env 文件
-        env_file = Path(".env")
+        env_file = self.project_root / ".env"
         if not env_file.exists():
             results["warnings"].append(
                 "未找到 .env 文件，将使用环境变量或默认值"
@@ -86,7 +94,8 @@ class ConfigValidator:
         ]
 
         for dir_name in required_dirs:
-            if not Path(dir_name).exists():
+            dir_path = self.project_root / dir_name
+            if not dir_path.exists():
                 results["warnings"].append(
                     f"目录不存在: {dir_name}（可能不影响运行）"
                 )
@@ -99,7 +108,8 @@ class ConfigValidator:
         ]
 
         for file_path in critical_files:
-            if not Path(file_path).exists():
+            full_path = self.project_root / file_path
+            if not full_path.exists():
                 results["errors"].append(f"关键文件缺失: {file_path}")
                 results["valid"] = False
 
@@ -192,7 +202,7 @@ def quick_validate():
     from dotenv import load_dotenv
     load_dotenv()
 
-    validator = ConfigValidator()
+    validator = ConfigValidator(project_root=Path.cwd())
     results = validator.validate()
     validator.print_results(results)
 
@@ -210,7 +220,7 @@ if __name__ == "__main__":
     load_dotenv()
 
     # 创建验证器
-    validator = ConfigValidator()
+    validator = ConfigValidator(project_root=Path.cwd())
 
     # 选择验证模式
     print("配置验证工具")
