@@ -202,7 +202,12 @@ def quick_validate():
     from dotenv import load_dotenv
     load_dotenv()
 
-    validator = ConfigValidator(project_root=Path.cwd())
+    # 自动检测项目根目录（脚本在 tools/ 目录下，向上一级是项目根）
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+
+    # 使用检测到的项目根目录
+    validator = ConfigValidator(project_root=project_root)
     results = validator.validate()
     validator.print_results(results)
 
@@ -219,8 +224,12 @@ if __name__ == "__main__":
     from dotenv import load_dotenv
     load_dotenv()
 
+    # 自动检测项目根目录（脚本在 tools/ 目录下，向上一级是项目根）
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+
     # 创建验证器
-    validator = ConfigValidator(project_root=Path.cwd())
+    validator = ConfigValidator(project_root=project_root)
 
     # 选择验证模式
     print("配置验证工具")
